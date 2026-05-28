@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch-Quiz: Wortschatz</title>
+    <style>
+        :root {
+            --primary-color: #2b6cb0;
+            --primary-hover: #2c5282;
+            --bg-color: #f7fafc;
+            --card-bg: #ffffff;
+            --text-color: #2d3748;
+            --success-color: #48bb78;
+            --error-color: #f56565;
+            --border-color: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .quiz-container {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            width: 100%;
+            max-width: 600px;
+            padding: 30px;
+        }
+
+        .quiz-header {
+            margin-bottom: 25px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+
+        .quiz-header h1 {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+
+        .question {
+            font-size: 1.2rem;
+            font-weight: 600;
+            line-height: 1.5;
+            margin-bottom: 25px;
+        }
+
+        .question .highlight {
+            background-color: #ebf8ff;
+            color: var(--primary-color);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        /* Responsive Anpassung: Zweispaltig ab Tablet-Größe */
+        @media (min-width: 480px) {
+            .options-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .option-btn {
+            background-color: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: var(--primary-color);
+            background-color: #f7fafc;
+        }
+
+        .option-btn:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+
+        .option-btn.correct {
+            background-color: #f0fff4;
+            border-color: var(--success-color);
+            color: #22543d;
+        }
+
+        .option-btn.wrong {
+            background-color: #fff5f5;
+            border-color: var(--error-color);
+            color: #742a2a;
+        }
+
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .feedback {
+            min-height: 50px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            text-align: center;
+            padding: 12px;
+            border-radius: 8px;
+            display: none;
+            margin-bottom: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .feedback.success {
+            display: block;
+            background-color: #c6f6d5;
+            color: #22543d;
+        }
+
+        .feedback.error {
+            display: block;
+            background-color: #fed7d7;
+            color: #742a2a;
+        }
+
+        /* Neustart-Button Styling */
+        .restart-btn {
+            display: none;
+            width: 100%;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .restart-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="quiz-container">
+        <div class="quiz-header">
+            <h1>Russisch Wortschatz-Quiz</h1>
+        </div>
+        
+        <div class="question">
+            Was bedeutet das umgangssprachliche Wort <span class="highlight">полтинник</span>?
+        </div>
+
+        <div class="options-grid">
+            <button class="option-btn" onclick="checkAnswer(this, false)">15</button>
+            <button class="option-btn" onclick="checkAnswer(this, true)">50</button>
+            <button class="option-btn" onclick="checkAnswer(this, false)">100</button>
+            <button class="option-btn" onclick="checkAnswer(this, false)">500</button>
+        </div>
+
+        <div id="feedback" class="feedback"></div>
+        
+        <button id="restart-btn" class="restart-btn" onclick="resetQuiz()">Neustart</button>
+    </div>
+
+    <script>
+        function checkAnswer(selectedButton, isCorrect) {
+            const buttons = document.querySelectorAll('.option-btn');
+            const feedbackDiv = document.getElementById('feedback');
+            const restartBtn = document.getElementById('restart-btn');
+
+            buttons.forEach(button => {
+                button.disabled = true;
+                if (button.innerText === '50') {
+                    button.classList.add('correct');
+                }
+            });
+
+            if (isCorrect) {
+                feedbackDiv.innerText = "Richtig! „полтинник“ steht umgangssprachlich für die Zahl 50 (z. B. 50 Rubel oder 50 Jahre).";
+                feedbackDiv.className = "feedback success";
+            } else {
+                selectedButton.classList.add('wrong');
+                feedbackDiv.innerText = "Leider falsch. Versuche es beim nächsten Mal!";
+                feedbackDiv.className = "feedback error";
+            }
+
+            // Zeige den Neustart-Button an
+            restartBtn.style.display = "block";
+        }
+
+        function resetQuiz() {
+            const buttons = document.querySelectorAll('.option-btn');
+            const feedbackDiv = document.getElementById('feedback');
+            const restartBtn = document.getElementById('restart-btn');
+
+            // Setze alle Antwort-Buttons zurück
+            buttons.forEach(button => {
+                button.disabled = false;
+                button.classList.remove('correct', 'wrong');
+            });
+
+            // Verberge Feedback und Neustart-Button wieder
+            feedbackDiv.style.display = "none";
+            feedbackDiv.className = "feedback";
+            restartBtn.style.display = "none";
+        }
+    </script>
+
+</body>
+</html>
