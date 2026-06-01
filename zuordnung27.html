@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zuordnungsspiel: Полтинник</title>
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --success: #2ec4b6;
+            --danger: #e71d36;
+            --dark: #2b2d42;
+            --light: #f8f9fa;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #e9ecef;
+            color: var(--dark);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            width: 100%;
+            max-width: 700px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            text-align: center;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        .instruction {
+            text-align: center;
+            color: #6c757d;
+            margin-bottom: 25px;
+            font-size: 1rem;
+        }
+
+        /* Kartenbereich */
+        .card-container {
+            min-height: 100px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .phrase-card {
+            background: var(--light);
+            border: 3px solid var(--primary);
+            border-radius: 10px;
+            padding: 20px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            text-align: center;
+            width: 100%;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+
+        .phrase-translation {
+            display: block;
+            font-size: 0.95rem;
+            color: #6c757d;
+            font-weight: normal;
+            margin-top: 8px;
+            font-style: italic;
+        }
+
+        /* Körbe / Buttons */
+        .basket-zone {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .basket-btn {
+            background: white;
+            border: 2px solid #medium;
+            border-radius: 12px;
+            padding: 20px 10px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .basket-btn .icon {
+            font-size: 2rem;
+        }
+
+        .basket-money {
+            border-color: #4caf50;
+            color: #4caf50;
+        }
+        .basket-money:hover {
+            background: #e8f5e9;
+        }
+
+        .basket-age {
+            border-color: #ff9800;
+            color: #ff9800;
+        }
+        .basket-age:hover {
+            background: #fff3e0;
+        }
+
+        /* Feedback & Fortschritt */
+        .feedback {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            height: 30px;
+            margin-bottom: 15px;
+        }
+
+        .progress-bar-container {
+            background: #e0e0e0;
+            border-radius: 10px;
+            height: 12px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            background: var(--primary);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .score-display {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+
+        /* Ergebnis-Bildschirm */
+        .result-screen {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .result-screen h2 {
+            color: var(--success);
+            margin-bottom: 15px;
+        }
+
+        .restart-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        .restart-btn:hover {
+            background: #357abd;
+        }
+
+        /* Responsive Anpassungen */
+        @media (max-width: 480px) {
+            h1 { font-size: 1.5rem; }
+            .phrase-card { font-size: 1.2rem; }
+            .basket-zone { grid-template-columns: 1fr; gap: 12px; }
+            .basket-btn { padding: 15px 10px; font-size: 1.1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div id="game-box">
+        <h1>Bedeutung von „полтинник“</h1>
+        <p class="instruction">Ordne den Satz dem richtigen Kontext zu: Geht es um Geld oder um das Alter?</p>
+        
+        <div class="card-container">
+            <div class="phrase-card" id="phrase-card">
+                <span id="russian-text">Wird geladen...</span>
+                <span class="phrase-translation" id="translation-text">Übersetzung</span>
+            </div>
+        </div>
+
+        <div class="basket-zone">
+            <button class="basket-btn basket-money" onclick="checkAnswer('Geld')">
+                <span class="icon">💵</span>
+                <span>Korb: Geld</span>
+                <span style="font-size:0.8rem; font-weight:normal;">(50 Rubel)</span>
+            </button>
+            <button class="basket-btn basket-age" onclick="checkAnswer('Alter')">
+                <span class="icon">🎂</span>
+                <span>Korb: Alter</span>
+                <span style="font-size:0.8rem; font-weight:normal;">(50 Jahre)</span>
+            </button>
+        </div>
+
+        <div class="feedback" id="feedback-text"></div>
+
+        <div class="progress-bar-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <div class="score-display" id="score-display">Frage 1 von X</div>
+    </div>
+
+    <div class="result-screen" id="result-screen">
+        <h2>Ausgezeichnet! 🎉</h2>
+        <p id="final-score">Du hast alle Sätze richtig zugeordnet.</p>
+        <button class="restart-btn" onclick="resetGame()">Nochmal spielen</button>
+    </div>
+</div>
+
+<script>
+    // Erweiterte Satz-Datenbank für mehr Abwechslung beim Lernen
+    const dataset = [
+        { rus: "Вам уже полтинник?", de: "Sind Sie schon fünfzig?", cat: "Alter" },
+        { rus: "Дай мне полтинник.", de: "Gib mir einen Fuffziger (50 Rubel).", cat: "Geld" },
+        { rus: "Ему завтра будет полтинник.", de: "Er wird morgen fünfzig.", cat: "Alter" },
+        { rus: "Это стоит полтинник.", de: "Das kostet einen Fuffziger (50 Rubel).", cat: "Geld" },
+        { rus: "У тебя есть полтинник до завтра?", de: "Hast du einen Fuffziger bis morgen?", cat: "Geld" },
+        { rus: "Скоро маме полтинник стукнет.", de: "Bald wird Mama fünfzig (wörtl. klopft die 50 an).", cat: "Alter" }
+    ];
+
+    let currentQuestions = [];
+    let currentIndex = 0;
+    let score = 0;
+
+    function shuffleArray(array) {
+        return array.sort(() => Math.random() - 0.5);
+    }
+
+    function startGame() {
+        currentQuestions = shuffleArray([...dataset]);
+        currentIndex = 0;
+        score = 0;
+        document.getElementById('game-box').style.display = 'block';
+        document.getElementById('result-screen').style.display = 'none';
+        showQuestion();
+    }
+
+    function showQuestion() {
+        if (currentIndex >= currentQuestions.length) {
+            showResults();
+            return;
+        }
+
+        const current = currentQuestions[currentIndex];
+        document.getElementById('russian-text').innerText = current.rus;
+        document.getElementById('translation-text').innerText = current.de;
+        document.getElementById('feedback-text').innerText = "";
+        
+        // Update Progress & Score
+        const progressPercent = (currentIndex / currentQuestions.length) * 100;
+        document.getElementById('progress-bar').style.width = progressPercent + "%";
+        document.getElementById('score-display').innerText = `Satz ${currentIndex + 1} von ${currentQuestions.length}`;
+    }
+
+    function checkAnswer(selectedCategory) {
+        const current = currentQuestions[currentIndex];
+        const feedbackEl = document.getElementById('feedback-text');
+        
+        if (selectedCategory === current.cat) {
+            feedbackEl.style.color = "var(--success)";
+            feedbackEl.innerText = "Richtig! ✨";
+            score++;
+        } else {
+            feedbackEl.style.color = "var(--danger)";
+            feedbackEl.innerText = `Nicht ganz. Richtig wäre: Korb ${current.cat}`;
+        }
+
+        // Kurze Pause, damit der Schüler das Feedback sieht, dann nächste Frage
+        currentIndex++;
+        setTimeout(showQuestion, 1200);
+    }
+
+    function showResults() {
+        document.getElementById('game-box').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'block';
+        document.getElementById('progress-bar').style.width = "100%";
+        document.getElementById('final-score').innerText = `Du hast ${score} von ${currentQuestions.length} Sätzen korrekt in die Körbe geworfen!`;
+    }
+
+    function resetGame() {
+        startGame();
+    }
+
+    // Spiel beim Laden direkt starten
+    window.onload = startGame;
+</script>
+
+</body>
+</html>
