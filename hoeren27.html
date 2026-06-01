@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio-Hörübung: Полтинник (5 Sätze)</title>
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --success: #2ec4b6;
+            --danger: #e71d36;
+            --dark: #2b2d42;
+            --light: #f8f9fa;
+            --border: #dee2e6;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #e9ecef;
+            color: var(--dark);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+            color: var(--primary);
+        }
+
+        .instruction {
+            color: #6c757d;
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+        }
+
+        /* Audio-Button Bereich */
+        .audio-box {
+            margin: 20px 0 30px 0;
+        }
+
+        .audio-btn {
+            background: #e3f2fd;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            border-radius: 50%;
+            width: 85px;
+            height: 85px;
+            font-size: 2.2rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 10px rgba(74, 144, 226, 0.2);
+        }
+
+        .audio-btn:hover {
+            transform: scale(1.05);
+            background: var(--primary);
+            color: white;
+        }
+
+        .audio-hint {
+            font-size: 0.85rem;
+            color: #ff9f1c;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+
+        /* Antwort-Buttons */
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .option-btn {
+            background: var(--light);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 1.05rem;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: var(--primary);
+            background: #f1f7fe;
+        }
+
+        /* Feedback-Box */
+        .feedback-box {
+            min-height: 40px;
+            font-weight: bold;
+            font-size: 1.05rem;
+            margin-bottom: 15px;
+            padding: 0 10px;
+        }
+
+        /* Steuerungstasten (Weiter/Neustart) */
+        .action-btn {
+            background: var(--dark);
+            color: white;
+            border: none;
+            padding: 12px 35px;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: background 0.2s;
+            display: none;
+            margin: 0 auto;
+        }
+
+        .action-btn:hover {
+            background: #3c405c;
+        }
+
+        /* Fortschrittsanzeige */
+        .progress-container {
+            margin-top: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: #6c757d;
+            border-top: 1px solid var(--border);
+            padding-top: 15px;
+        }
+
+        .progress-bar {
+            background: #e0e0e0;
+            border-radius: 5px;
+            height: 6px;
+            width: 70%;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: var(--primary);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Ergebnis-Bildschirm */
+        .result-box {
+            display: none;
+            padding: 20px 0;
+        }
+
+        .result-box h2 {
+            color: var(--success);
+            margin-bottom: 15px;
+        }
+
+        @media (max-width: 480px) {
+            h1 { font-size: 1.5rem; }
+            .option-btn { font-size: 0.95rem; padding: 12px; }
+            .audio-btn { width: 75px; height: 75px; font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div id="game-box">
+        <h1>Hörübung: Полтинник (5 Sätze)</h1>
+        <p class="instruction">Klicke zuerst auf das Lautsprecher-Symbol, um den Satz anzuhören. Wähle dann die richtige Bedeutung.</p>
+
+        <div class="audio-box">
+            <button class="audio-btn" onclick="playAudio()">🔊</button>
+            <div class="audio-hint">← HIER KLICKEN ZUM ANHÖREN</div>
+        </div>
+
+        <div class="options-container" id="options-container">
+            <!-- Optionen werden dynamisch via JavaScript geladen -->
+        </div>
+
+        <div class="feedback-box" id="feedback-box"></div>
+        <button class="action-btn" id="next-btn" onclick="nextQuestion()">Nächste Frage</button>
+
+        <div class="progress-container">
+            <span id="progress-text">Frage 1 von 5</span>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="result-box" id="result-box">
+        <h2>Hörtraining abgeschlossen! 🎉</h2>
+        <p id="final-score" style="margin-bottom: 25px; color: #495057; font-size: 1.1rem;"></p>
+        <button class="action-btn" style="display:block; background:var(--primary);" onclick="restartGame()">Neustart</button>
+    </div>
+</div>
+
+<script>
+    // Die 5 didaktischen Audio-Aufgaben
+    const questions = [
+        {
+            audioText: "Я купил книгу за полтинник.",
+            options: [
+                { text: "Er hat ein Buch für 50 Rubel gekauft.", correct: true },
+                { text: "Er hat 50 Bücher gekauft.", correct: false },
+                { text: "Er hat das Buch in 50 Minuten gelesen.", correct: false }
+            ],
+            tip: "Geld-Kontext: 'полтинник' steht umgangssprachlich für 50 Rubel."
+        },
+        {
+            audioText: "Моему отцу скоро полтинник.",
+            options: [
+                { text: "Mein Vater hat bald 50 Rubel.", correct: false },
+                { text: "Mein Vater wird bald 50 Jahre alt.", correct: true },
+                { text: "Mein Vater feiert in 50 Tagen Geburtstag.", correct: false }
+            ],
+            tip: "Alters-Kontext: Bei Personen bezeichnet das Wort das 50. Lebensjahr."
+        },
+        {
+            audioText: "Этот билет стоит полтинник.",
+            options: [
+                { text: "Dieses Ticket kostet 50 Rubel.", correct: true },
+                { text: "Dieses Ticket gilt für 50 Personen.", correct: false },
+                { text: "Dieses Ticket ist 50 Kilometer gültig.", correct: false }
+            ],
+            tip: "Preis-Kontext: 'Это стоит...' kündigt einen Geldbetrag an."
+        },
+        {
+            audioText: "Ей уже полтинник.",
+            options: [
+                { text: "Sie hat bereits 50 Rubel ausgegeben.", correct: false },
+                { text: "Sie besitzt genau 50 Bücher.", correct: false },
+                { text: "Sie ist bereits fünfzig Jahre alt.", correct: true }
+            ],
+            tip: "Umgangssprache: 'Ей...' (Ihr...) bezieht sich auf das Alter einer weiblichen Person."
+        },
+        {
+            audioText: "Дай мне один полтинник.",
+            options: [
+                { text: "Gib mir eine Münze / einen Schein im Wert von 50 Rubel.", correct: true },
+                { text: "Gib mir 50 verschiedene Sachen.", correct: false },
+                { text: "Lass mir 50 Minuten Zeit.", correct: false }
+            ],
+            tip: "Aufforderung: 'Дай мне...' bittet um das konkrete Geldstück/den Geldschein."
+        }
+    ];
+
+    let currentIndex = 0;
+    let score = 0;
+
+    // Zuverlässige Audio-Wiedergabe (Ausgelöst NUR durch Klick)
+    function playAudio() {
+        if ('speechSynthesis' in window) {
+            // Erzwinge Abbruch eventueller alter Systemprozesse
+            window.speechSynthesis.cancel();
+            
+            const text = questions[currentIndex].audioText;
+            const utterance = new SpeechSynthesisUtterance(text);
+            
+            utterance.lang = 'ru-RU'; // Aktiviert die russische Sprachdatenbank des Geräts
+            utterance.rate = 0.8;    // Leicht verlangsamt für optimale Verständlichkeit im Unterricht
+            utterance.volume = 1.0;  // Maximale Lautstärke innerhalb des Browser-Kontexts
+            
+            window.speechSynthesis.speak(utterance);
+        } else {
+            alert("Dein Browser unterstützt die integrierte Sprachausgabe leider nicht. Bitte nutze Chrome, Safari, Firefox oder Edge.");
+        }
+    }
+
+    function loadQuestion() {
+        if (currentIndex >= questions.length) {
+            showResults();
+            return;
+        }
+
+        const current = questions[currentIndex];
+        const container = document.getElementById('options-container');
+        
+        // UI bereinigen
+        container.innerHTML = "";
+        document.getElementById('feedback-box').innerText = "";
+        document.getElementById('next-btn').style.display = "none";
+
+        // Antwortoptionen mischen und als interaktive Buttons ausgeben
+        const shuffledOptions = [...current.options].sort(() => Math.random() - 0.5);
+        
+        shuffledOptions.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = opt.text;
+            btn.onclick = () => checkAnswer(btn, opt.correct);
+            container.appendChild(btn);
+        });
+
+        // Fortschritts-Anpassungen
+        document.getElementById('progress-text').innerText = `Frage ${currentIndex + 1} von ${questions.length}`;
+        document.getElementById('progress-fill').style.width = ((currentIndex / questions.length) * 100) + "%";
+    }
+
+    function checkAnswer(selectedBtn, isCorrect) {
+        const feedback = document.getElementById('feedback-box');
+        const buttons = document.querySelectorAll('.option-btn');
+        
+        // Sperrt alle Optionen nach dem ersten Klick
+        buttons.forEach(btn => btn.disabled = true);
+
+        if (isCorrect) {
+            selectedBtn.style.borderColor = "var(--success)";
+            selectedBtn.style.background = "#e8f5e9";
+            feedback.innerHTML = `<span style="color:var(--success)">Richtig! 🌟</span>`;
+            score++;
+        } else {
+            selectedBtn.style.borderColor = "var(--danger)";
+            selectedBtn.style.background = "#ffebee";
+            feedback.innerHTML = `<span style="color:var(--danger)">Hinweis: ${questions[currentIndex].tip}</span>`;
+            
+            // Zeigt dem Schüler den korrekten Pfad unaufdringlich in Grün an
+            buttons.forEach((btn) => {
+                const associatedOption = questions[currentIndex].options.find(o => o.text === btn.innerText);
+                if (associatedOption && associatedOption.correct) {
+                    btn.style.borderColor = "var(--success)";
+                    btn.style.background = "#e8f5e9";
+                }
+            });
+        }
+
+        document.getElementById('next-btn').style.display = "block";
+    }
+
+    function nextQuestion() {
+        currentIndex++;
+        loadQuestion();
+    }
+
+    function showResults() {
+        document.getElementById('game-box').style.display = "none";
+        document.getElementById('result-box').style.display = "block";
+        document.getElementById('final-score').innerText = `Du hast ${score} von ${questions.length} Sätzen richtig herausgehört!`;
+    }
+
+    function restartGame() {
+        currentIndex = 0;
+        score = 0;
+        document.getElementById('game-box').style.display = "block";
+        document.getElementById('result-box').style.display = "none";
+        loadQuestion();
+    }
+
+    // Skript initialisieren
+    window.onload = loadQuestion;
+</script>
+
+</body>
+</html>
