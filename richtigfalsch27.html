@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Richtig oder Falsch: Полтинник (5 Aufgaben)</title>
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --success: #2ec4b6;
+            --danger: #e71d36;
+            --dark: #2b2d42;
+            --light: #f8f9fa;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #e9ecef;
+            color: var(--dark);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            text-align: center;
+            margin-bottom: 5px;
+            color: var(--primary);
+        }
+
+        .instruction {
+            text-align: center;
+            color: #6c757d;
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+        }
+
+        /* Statement-Box */
+        .statement-card {
+            background: var(--light);
+            border-left: 5px solid var(--primary);
+            border-radius: 4px 12px 12px 4px;
+            padding: 25px 20px;
+            font-size: 1.2rem;
+            line-height: 1.6rem;
+            text-align: left;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Buttons */
+        .btn-zone {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .quiz-btn {
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 16px 10px;
+            font-size: 1.15rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .quiz-btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-true { background-color: var(--success); }
+        .btn-true:hover { background-color: #24b0a3; }
+
+        .btn-false { background-color: var(--danger); }
+        .btn-false:hover { background-color: #cf172e; }
+
+        /* Erklärung & Feedback */
+        .feedback-box {
+            background: #f1f3f5;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .feedback-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .explanation {
+            font-size: 0.95rem;
+            color: #495057;
+            line-height: 1.4rem;
+        }
+
+        .next-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+            margin: 0 auto;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .next-btn:hover { background: #357abd; }
+
+        /* Fortschritt */
+        .progress-container {
+            margin-top: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: #6c757d;
+            border-top: 1px solid #dee2e6;
+            padding-top: 15px;
+        }
+
+        .progress-bar {
+            background: #e0e0e0;
+            border-radius: 5px;
+            height: 6px;
+            width: 70%;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: var(--primary);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Ergebnis-Bildschirm */
+        .result-screen {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .result-screen h2 {
+            color: var(--success);
+            margin-bottom: 15px;
+        }
+
+        @media (max-width: 480px) {
+            h1 { font-size: 1.5rem; }
+            .statement-card { font-size: 1.05rem; padding: 15px; }
+            .btn-zone { grid-template-columns: 1fr; gap: 10px; }
+            .quiz-btn { padding: 14px 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div id="game-box">
+        <h1>Полтинник: Richtig oder Falsch?</h1>
+        <p class="instruction">Prüfe, ob die Behauptung der Wahrheit entspricht.</p>
+
+        <div class="statement-card" id="statement-text">
+            Wird geladen...
+        </div>
+
+        <div class="btn-zone" id="btn-zone">
+            <button class="quiz-btn btn-true" onclick="handleAnswer(true)">
+                <span>✔️</span> Richtig
+            </button>
+            <button class="quiz-btn btn-false" onclick="handleAnswer(false)">
+                <span>❌</span> Falsch
+            </button>
+        </div>
+
+        <div class="feedback-box" id="feedback-box">
+            <div class="feedback-title" id="feedback-title">Feedback</div>
+            <div class="explanation" id="explanation-text">Erklärung</div>
+        </div>
+
+        <button class="next-btn" id="next-btn" onclick="nextQuestion()">Nächste Frage</button>
+
+        <div class="progress-container">
+            <span id="progress-text">Frage 1 von 5</span>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="result-screen" id="result-screen">
+        <h2>Quiz beendet! 🎉</h2>
+        <p id="final-score">Du hast X von 5 Fragen richtig beantwortet.</p>
+        <button class="quiz-btn btn-true" style="margin: 25px auto 0 auto; padding: 12px 30px;" onclick="restartGame()">Erneut starten</button>
+    </div>
+</div>
+
+<script>
+    // Die 5 geforderten Aufgabenstellungen inklusive Lösungen und Erklärungen
+    const questions = [
+        {
+            statement: "„Das Wort <strong>полтинник</strong> kommt historisch von der Zahl fünf (пять).“",
+            correct: false,
+            explanation: "<strong>Falsch!</strong> Es leitet sich historisch vom Wort <strong>половина</strong> (Hälfte) ab, da ein полтинник im alten russischen Münzsystem die Hälfte eines ganzen Rubels (also genau 50 Kopeken) wert war."
+        },
+        {
+            statement: "„Man kann <strong>полтинник</strong> nutzen, um zu sagen, dass jemand 50 Jahre alt wird.“",
+            correct: true,
+            explanation: "<strong>Richtig!</strong> Neben dem Geldbetrag ist die Verwendung für das Alter (das Erreichen des 50. Lebensjahres) im Alltag absolut gebräuchlich und ersetzt den Ausdruck 'пятьдесят лет'."
+        },
+        {
+            statement: "„Der Satz <em>'Это стоит полтинник'</em> bedeutet übersetzt: 'Das kostet fünf Rubel.'“",
+            correct: false,
+            explanation: "<strong>Falsch!</strong> Da 'полтинник' als Synonym für die Zahl 50 steht, bedeutet es übersetzt: 'Das kostet einen Fuffziger' bzw. 'Das kostet <strong>50 Rubel</strong>'."
+        },
+        {
+            statement: "„Wenn jemand sagt: <em>'Мне завтра полтинник'</em>, meint er, dass er morgen 50 Jahre alt wird.“",
+            correct: true,
+            explanation: "<strong>Richtig!</strong> Im alltäglichen Russisch wird das Verb 'werden' oft weggelassen. Dieser kurze Satz ist die typische Umgangsform für: 'Morgen werde ich fünfzig'."
+        },
+        {
+            statement: "„In einem formellen, schriftlichen Vertrag mit einer russischen Bank sollte man das Wort <strong>полтинник</strong> für Beträge verwenden.“",
+            correct: false,
+            explanation: "<strong>Falsch!</strong> 'Полтинник' ist ein rein <strong>umgangssprachlicher</strong> Begriff (Slang/Alltagssprache). In offiziellen Dokumenten, Verträgen oder im formellen Geschäftsleben muss immer das Standardzahlwort <strong>пятьдесят</strong> genutzt werden."
+        }
+    ];
+
+    let currentIndex = 0;
+    let score = 0;
+
+    function loadQuestion() {
+        if (currentIndex >= questions.length) {
+            showResults();
+            return;
+        }
+
+        const current = questions[currentIndex];
+        document.getElementById('statement-text').innerHTML = current.statement;
+        
+        // UI-Elemente für die neue Frage zurücksetzen
+        document.getElementById('feedback-box').style.display = 'none';
+        document.getElementById('next-btn').style.display = 'none';
+        document.getElementById('btn-zone').style.pointerEvents = 'auto';
+        document.getElementById('btn-zone').style.opacity = '1';
+
+        // Fortschrittsanzeige aktualisieren
+        document.getElementById('progress-text').innerText = `Frage ${currentIndex + 1} von ${questions.length}`;
+        document.getElementById('progress-fill').style.width = ((currentIndex / questions.length) * 100) + "%";
+    }
+
+    function handleAnswer(userChoice) {
+        const current = questions[currentIndex];
+        const feedbackBox = document.getElementById('feedback-box');
+        const feedbackTitle = document.getElementById('feedback-title');
+        const explanationText = document.getElementById('explanation-text');
+        
+        // Klicks auf Buttons temporär sperren
+        document.getElementById('btn-zone').style.pointerEvents = 'none';
+        document.getElementById('btn-zone').style.opacity = '0.6';
+
+        if (userChoice === current.correct) {
+            feedbackTitle.innerText = "Richtig! ✨";
+            feedbackTitle.style.color = "var(--success)";
+            score++;
+        } else {
+            feedbackTitle.innerText = "Nicht ganz! 💡";
+            feedbackTitle.style.color = "var(--danger)";
+        }
+
+        explanationText.innerHTML = current.explanation;
+        feedbackBox.style.display = 'block';
+        document.getElementById('next-btn').style.display = 'block';
+    }
+
+    function nextQuestion() {
+        currentIndex++;
+        loadQuestion();
+    }
+
+    function showResults() {
+        document.getElementById('game-box').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'block';
+        document.getElementById('progress-fill').style.width = "100%";
+        document.getElementById('final-score').innerText = `Du hast ${score} von ${questions.length} Aussagen richtig eingeschätzt!`;
+    }
+
+    function restartGame() {
+        currentIndex = 0;
+        score = 0;
+        document.getElementById('game-box').style.display = 'block';
+        document.getElementById('result-screen').style.display = 'none';
+        loadQuestion();
+    }
+
+    // Beim Laden der Seite das Spiel starten
+    window.onload = loadQuestion;
+</script>
+
+</body>
+</html>
