@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visuelle Zuordnung: Полтинник (6 Aufgaben)</title>
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --success: #2ec4b6;
+            --dark: #2b2d42;
+            --light: #f8f9fa;
+            --border: #dee2e6;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #e9ecef;
+            color: var(--dark);
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            width: 100%;
+            max-width: 750px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+            color: var(--primary);
+        }
+
+        .instruction {
+            color: #6c757d;
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+        }
+
+        /* Responsive Grid: 2 Spalten auf Desktop/Tablet */
+        .matching-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .column {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .column-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            color: #888;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        /* Zuordnungskarten */
+        .match-card {
+            background: var(--light);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-height: 85px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            user-select: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+
+        .match-card:hover:not(.selected):not(.matched) {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .match-card.selected {
+            border-color: var(--primary);
+            background-color: #e3f2fd;
+            color: var(--primary);
+        }
+
+        /* Element verschwindet langsam bei richtigem Match */
+        .match-card.matched {
+            background-color: #e8f5e9;
+            border-color: var(--success);
+            color: var(--success);
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.9);
+        }
+
+        /* Emoji-spezifische Stile */
+        .emoji-display {
+            font-size: 2.2rem;
+            margin-bottom: 4px;
+        }
+        .emoji-label {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+
+        /* Text-spezifische Stile */
+        .text-display {
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+        .translation-hint {
+            font-size: 0.85rem;
+            color: #6c757d;
+            font-weight: normal;
+            margin-top: 4px;
+            font-style: italic;
+        }
+
+        /* Ergebnis & Neustart */
+        .result-box {
+            display: none;
+            padding: 20px 0;
+        }
+
+        .result-box h2 {
+            color: var(--success);
+            margin-bottom: 15px;
+        }
+
+        .restart-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 35px;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: background 0.2s;
+        }
+        .restart-btn:hover { background: #357abd; }
+
+        /* Mobile Ansicht: Spalten untereinander fließen lassen */
+        @media (max-width: 600px) {
+            .matching-area {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+            .column-title {
+                border-bottom: 2px solid var(--border);
+                padding-bottom: 5px;
+            }
+            h1 { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div id="game-box">
+        <h1>Visuelle Zuordnung (6 Aufgaben)</h1>
+        <p class="instruction">Wähle links ein sprachliches Element und rechts das dazu passende Kontext-Bild.</p>
+
+        <div class="matching-area">
+            <!-- Linke Spalte: Sätze & Begriffe -->
+            <div class="column">
+                <div class="column-title">Sprachliches Element</div>
+                <div id="text-container"></div>
+            </div>
+
+            <!-- Rechte Spalte: Visuelle Kontexte (Emojis) -->
+            <div class="column">
+                <div class="column-title">Visueller Kontext</div>
+                <div id="image-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="result-box" id="result-box">
+        <h2>Großartig gelöst! 🎉</h2>
+        <p style="margin-bottom: 25px; color: #495057;">Du hast alle 6 Kontexte fehlerfrei zugeordnet und die Facetten von <strong>полтинник</strong> gemeistert!</p>
+        <button class="restart-btn" onclick="initGame()">Neustart</button>
+    </div>
+</div>
+
+<script>
+    // Die 6 ausformulierten sprachlichen Aufgabenstellungen
+    const textCards = [
+        { id: "alter1", text: "Ему завтра будет полтинник.", hint: "Er wird morgen fünfzig." },
+        { id: "geld1", text: "Это стоит полтинник.", hint: "Das kostet einen Fuffziger." },
+        { id: "geld2", text: "Дай мне полтинник.", hint: "Gib mir 50 Rubel." },
+        { id: "alter2", text: "Вам уже полтинnik?", hint: "Sind Sie schon fünfzig?" },
+        { id: "herkunft", text: "половина", hint: "Historischer Ursprung: Hälfte" },
+        { id: "standard", text: "пятьдесят рублей", hint: "Formelle Standardsprache" }
+    ];
+
+    // Die 6 passenden Bild-/Emoji-Kontexte
+    const imageCards = [
+        { id: "alter1", emoji: "🎂", label: "Geburtstagstorte (50. Geburtstag)" },
+        { id: "geld1", emoji: "🏷️", label: "Preisschild im Supermarkt" },
+        { id: "geld2", emoji: "💵", label: "Geldschein-Übergabe" },
+        { id: "alter2", emoji: "👴", label: "Reiferes Alter / 50 Lebensjahre" },
+        { id: "herkunft", emoji: "🍕", label: "Eine geteilte Hälfte" },
+        { id: "standard", emoji: "💼", label: "Offizielles Business / Banken" }
+    ];
+
+    let selectedTextCard = null;
+    let selectedImageCard = null;
+    let matchesFound = 0;
+
+    // Shuffle-Algorithmus
+    function shuffle(array) {
+        return array.sort(() => Math.random() - 0.5);
+    }
+
+    function initGame() {
+        const textContainer = document.getElementById('text-container');
+        const imageContainer = document.getElementById('image-container');
+        const resultBox = document.getElementById('result-box');
+        const gameBox = document.getElementById('game-box');
+
+        // Reset
+        textContainer.innerHTML = "";
+        imageContainer.innerHTML = "";
+        resultBox.style.display = "none";
+        gameBox.style.display = "block";
+        selectedTextCard = null;
+        selectedImageCard = null;
+        matchesFound = 0;
+
+        // Beide Spalten unabhängig voneinander durchmischen
+        const shuffledTexts = shuffle([...textCards]);
+        const shuffledImages = shuffle([...imageCards]);
+
+        // Links: Text-Karten bauen
+        shuffledTexts.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'match-card';
+            card.dataset.matchId = item.id;
+            card.innerHTML = `
+                <div class="text-display">${item.text}</div>
+                <div class="translation-hint">${item.hint}</div>
+            `;
+            card.onclick = () => selectText(card);
+            textContainer.appendChild(card);
+        });
+
+        // Rechts: Bild-Karten bauen
+        shuffledImages.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'match-card';
+            card.dataset.matchId = item.id;
+            card.innerHTML = `
+                <div class="emoji-display">${item.emoji}</div>
+                <div class="emoji-label">${item.label}</div>
+            `;
+            card.onclick = () => selectImage(card);
+            imageContainer.appendChild(card);
+        });
+    }
+
+    function selectText(card) {
+        if (card.classList.contains('matched')) return;
+        
+        if (selectedTextCard) {
+            selectedTextCard.classList.remove('selected');
+        }
+        selectedTextCard = card;
+        selectedTextCard.classList.add('selected');
+
+        checkMatch();
+    }
+
+    function selectImage(card) {
+        if (card.classList.contains('matched')) return;
+
+        if (selectedImageCard) {
+            selectedImageCard.classList.remove('selected');
+        }
+        selectedImageCard = card;
+        selectedImageCard.classList.add('selected');
+
+        checkMatch();
+    }
+
+    function checkMatch() {
+        if (selectedTextCard && selectedImageCard) {
+            if (selectedTextCard.dataset.matchId === selectedImageCard.dataset.matchId) {
+                // Richtiges Paar gefunden
+                const tCard = selectedTextCard;
+                const iCard = selectedImageCard;
+
+                tCard.classList.remove('selected');
+                iCard.classList.remove('selected');
+                
+                // Aktiviert die CSS-Transition zum Ausblenden
+                tCard.classList.add('matched');
+                iCard.classList.add('matched');
+
+                matchesFound++;
+
+                // Wenn alle 6 Zuweisungen stimmen
+                if (matchesFound === textCards.length) {
+                    setTimeout(() => {
+                        document.getElementById('game-box').style.display = "none";
+                        document.getElementById('result-box').style.display = "block";
+                    }, 800);
+                }
+            } else {
+                // Falsches Paar: Markierung nach kurzer Verzögerung wieder aufheben
+                const tCard = selectedTextCard;
+                const iCard = selectedImageCard;
+                
+                setTimeout(() => {
+                    tCard.classList.remove('selected');
+                    iCard.classList.remove('selected');
+                }, 500);
+            }
+
+            // Auswahlvariablen leeren für die nächste Eingabe
+            selectedTextCard = null;
+            selectedImageCard = null;
+        }
+    }
+
+    // Beim Seitenstart direkt initialisieren
+    window.onload = initGame;
+</script>
+
+</body>
+</html>
