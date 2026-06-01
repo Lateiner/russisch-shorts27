@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lückentext: Полтинник</title>
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --success: #2ec4b6;
+            --danger: #e71d36;
+            --dark: #2b2d42;
+            --light: #f8f9fa;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #e9ecef;
+            color: var(--dark);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            width: 100%;
+            max-width: 650px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            text-align: center;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        .instruction {
+            text-align: center;
+            color: #6c757d;
+            margin-bottom: 30px;
+            font-size: 1rem;
+        }
+
+        /* Satzbereich mit Lücke */
+        .sentence-area {
+            background: var(--light);
+            border-radius: 12px;
+            padding: 30px 20px;
+            text-align: center;
+            font-size: 1.6rem;
+            font-weight: bold;
+            margin-bottom: 25px;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+            line-height: 2.2rem;
+        }
+
+        .drop-gap {
+            display: inline-block;
+            min-width: 130px;
+            height: 40px;
+            border-bottom: 3px dashed var(--primary);
+            margin: 0 10px;
+            vertical-align: middle;
+            color: var(--primary);
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .drop-gap.filled {
+            border-bottom: none;
+            background: #e3f2fd;
+            border-radius: 6px;
+            padding: 0 10px;
+        }
+
+        .translation-hint {
+            display: block;
+            font-size: 1rem;
+            color: #6c757d;
+            font-weight: normal;
+            margin-top: 15px;
+            font-style: italic;
+        }
+
+        /* Optionen / Kärtchen */
+        .options-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+            min-height: 55px;
+        }
+
+        .word-card {
+            background: white;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.05);
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .word-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+        }
+
+        .word-card.selected {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        /* Buttons & Steuerung */
+        .control-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .action-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: background 0.2s;
+            width: 100%;
+            max-width: 200px;
+        }
+
+        .action-btn:hover {
+            background: #357abd;
+        }
+
+        .action-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .feedback {
+            font-size: 1.2rem;
+            font-weight: bold;
+            height: 25px;
+            text-align: center;
+        }
+
+        /* Ergebnis-Bildschirm */
+        .result-screen {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .result-screen h2 {
+            color: var(--success);
+            margin-bottom: 15px;
+        }
+
+        /* Fortschritt */
+        .progress-container {
+            margin-top: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+
+        .progress-bar {
+            background: #e0e0e0;
+            border-radius: 5px;
+            height: 6px;
+            width: 70%;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: var(--primary);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Responsive Anpassungen */
+        @media (max-width: 480px) {
+            h1 { font-size: 1.5rem; }
+            .sentence-area { font-size: 1.3rem; padding: 20px 10px; }
+            .drop-gap { min-width: 100px; height: 35px; }
+            .word-card { font-size: 1rem; padding: 8px 15px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div id="game-box">
+        <h1>Ergänze den Satz sinnvoll</h1>
+        <p class="instruction">Klicke auf das passende russische Wort, um die Lücke zu füllen.</p>
+
+        <div class="sentence-area">
+            <span id="prefix-text">Это стоит</span>
+            <span id="gap" class="drop-gap" onclick="clearGap()">...</span>
+            <span id="suffix-text"></span>
+            <span class="translation-hint" id="translation-text">Das kostet einen Fuffziger / 50 Rubel.</span>
+        </div>
+
+        <div class="options-container" id="options-box">
+            <!-- Wörter werden dynamisch generiert -->
+        </div>
+
+        <div class="control-area">
+            <div class="feedback" id="feedback-text"></div>
+            <button class="action-btn" id="check-btn" onclick="validateAnswer()" disabled>Prüfen</button>
+        </div>
+
+        <div class="progress-container">
+            <span id="progress-text">Aufgabe 1 von 3</span>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="result-screen" id="result-screen">
+        <h2>Prima gemacht! 🎉</h2>
+        <p id="final-score">Du hast alle Lücken erfolgreich ausgefüllt.</p>
+        <button class="action-btn" style="margin-top:20px;" onclick="restartGame()">Nochmal</button>
+    </div>
+</div>
+
+<script>
+    // Aufgaben-Pool (Jede Aufgabe hat einen Satz, Optionen und die korrekte Lösung)
+    const questions = [
+        {
+            prefix: "Это стоит",
+            suffix: ".",
+            translation: "Das kostet einen Fuffziger / 50 Rubel.",
+            options: ["полтинник", "лет", "рублей"],
+            correct: "полтинник"
+        },
+        {
+            prefix: "Ему завтра будет",
+            suffix: ".",
+            translation: "Er wird morgen fünfzig.",
+            options: ["полтинник", "рубли", "время"],
+            correct: "полтинник"
+        },
+        {
+            prefix: "Дай мне",
+            suffix: ", пожалуйста.",
+            translation: "Gib mir bitte einen Fuffziger (50 Rubel).",
+            options: ["человек", "полтинник", "лет"],
+            correct: "полтинник"
+        }
+    ];
+
+    let currentIndex = 0;
+    let selectedWord = "";
+    let score = 0;
+
+    function loadQuestion() {
+        if (currentIndex >= questions.length) {
+            showResults();
+            return;
+        }
+
+        const current = questions[currentIndex];
+        document.getElementById('prefix-text').innerText = current.prefix + " ";
+        document.getElementById('suffix-text').innerText = current.suffix;
+        document.getElementById('translation-text').innerText = current.translation;
+        
+        // Lücke zurücksetzen
+        const gap = document.getElementById('gap');
+        gap.innerText = "...";
+        gap.classList.remove('filled');
+        selectedWord = "";
+        
+        document.getElementById('feedback-text').innerText = "";
+        document.getElementById('check-btn').disabled = true;
+        document.getElementById('check-btn').innerText = "Prüfen";
+        document.getElementById('check-btn').setAttribute("onclick", "validateAnswer()");
+
+        // Optionen mischen und anzeigen
+        const optionsBox = document.getElementById('options-box');
+        optionsBox.innerHTML = "";
+        
+        const shuffledOptions = [...current.options].sort(() => Math.random() - 0.5);
+        
+        shuffledOptions.forEach(word => {
+            const card = document.createElement('div');
+            card.className = 'word-card';
+            card.innerText = word;
+            card.onclick = () => selectWord(word, card);
+            optionsBox.appendChild(card);
+        });
+
+        // Fortschritt aktualisieren
+        document.getElementById('progress-text').innerText = `Aufgabe ${currentIndex + 1} von ${questions.length}`;
+        document.getElementById('progress-fill').style.width = ((currentIndex / questions.length) * 100) + "%";
+    }
+
+    function selectWord(word, cardElement) {
+        // Vorherige Auswahl im UI aufheben
+        const cards = document.querySelectorAll('.word-card');
+        cards.forEach(c => c.classList.remove('selected'));
+        
+        // Neue Auswahl setzen
+        selectedWord = word;
+        cardElement.classList.add('selected');
+        
+        // Lücke füllen
+        const gap = document.getElementById('gap');
+        gap.innerText = word;
+        gap.classList.add('filled');
+        
+        // Prüfen-Button aktivieren
+        document.getElementById('check-btn').disabled = false;
+    }
+
+    function clearGap() {
+        if(document.getElementById('check-btn').innerText === "Weiter") return;
+        
+        const gap = document.getElementById('gap');
+        gap.innerText = "...";
+        gap.classList.remove('filled');
+        selectedWord = "";
+        document.getElementById('check-btn').disabled = true;
+        
+        const cards = document.querySelectorAll('.word-card');
+        cards.forEach(c => c.classList.remove('selected'));
+    }
+
+    function validateAnswer() {
+        const current = questions[currentIndex];
+        const feedback = document.getElementById('feedback-text');
+        const checkBtn = document.getElementById('check-btn');
+
+        if (selectedWord === current.correct) {
+            feedback.style.color = "var(--success)";
+            feedback.innerText = "Richtig! 👍";
+            score++;
+        } else {
+            feedback.style.color = "var(--danger)";
+            feedback.innerText = `Falsch. Richtig ist: ${current.correct}`;
+        }
+
+        // Button zu "Weiter" umwandeln
+        checkBtn.innerText = "Weiter";
+        checkBtn.setAttribute("onclick", "nextQuestion()");
+    }
+
+    function nextQuestion() {
+        currentIndex++;
+        loadQuestion();
+    }
+
+    function showResults() {
+        document.getElementById('game-box').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'block';
+        document.getElementById('progress-fill').style.width = "100%";
+        document.getElementById('final-score').innerText = `Du hast ${score} von ${questions.length} Sätzen fehlerfrei ergänzt!`;
+    }
+
+    function restartGame() {
+        currentIndex = 0;
+        score = 0;
+        document.getElementById('game-box').style.display = 'block';
+        document.getElementById('result-screen').style.display = 'none';
+        loadQuestion();
+    }
+
+    // Direkt beim Start laden
+    window.onload = loadQuestion;
+</script>
+
+</body>
+</html>
