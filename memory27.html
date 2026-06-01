@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory: Полтинник (12 Karten)</title>
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --success: #2ec4b6;
+            --dark: #2b2d42;
+            --light: #f8f9fa;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #e9ecef;
+            color: var(--dark);
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            width: 100%;
+            max-width: 750px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+            color: var(--primary);
+        }
+
+        .instruction {
+            color: #6c757d;
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+        }
+
+        /* Memory-Grid: Standardmäßig 4 Spalten auf Desktop/Tablet */
+        .memory-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .memory-card {
+            background: var(--light);
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            padding: 20px 10px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 110px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.03);
+            transition: all 0.4s ease;
+            user-select: none;
+        }
+
+        /* Karten-Zustände */
+        .memory-card:hover:not(.selected):not(.matched) {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .memory-card.selected {
+            border-color: var(--primary);
+            background-color: #e3f2fd;
+            color: var(--primary);
+        }
+
+        /* Sanftes Verschwinden für gefundene Paare */
+        .memory-card.matched {
+            background-color: #e8f5e9;
+            border-color: var(--success);
+            color: var(--success);
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.8);
+        }
+
+        .card-style-hint {
+            font-size: 0.75rem;
+            font-weight: normal;
+            color: #888;
+            margin-top: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Ergebnis-Bildschirm */
+        .result-box {
+            display: none;
+            padding: 20px 0;
+        }
+
+        .result-box h2 {
+            color: var(--success);
+            margin-bottom: 15px;
+        }
+
+        .restart-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 35px;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: background 0.2s;
+        }
+
+        .restart-btn:hover {
+            background: #357abd;
+        }
+
+        /* Responsive Anpassung für Smartphones (Wechsel auf 3 Spalten x 4 Reihen für bessere Lesbarkeit) */
+        @media (max-width: 550px) {
+            .memory-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+            }
+            .memory-card {
+                font-size: 0.9rem;
+                padding: 15px 5px;
+                min-height: 95px;
+            }
+            h1 { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div id="game-box">
+        <h1>Paare finden (12 Karten)</h1>
+        <p class="instruction">Finde die zusammengehörenden Paare (Russischer Begriff ↔ Deutsche Bedeutung/Kontext).</p>
+
+        <div class="memory-grid" id="card-grid">
+            <!-- Karten werden dynamisch generiert -->
+        </div>
+    </div>
+
+    <div class="result-box" id="result-box">
+        <h2>Perfekt gelöst! 🎉</h2>
+        <p style="margin-bottom: 25px; color: #495057;">Du hast alle 6 Paare fehlerfrei aufgedeckt und zugeordnet.</p>
+        <button class="restart-btn" onclick="initGame()">Neustart</button>
+    </div>
+</div>
+
+<script>
+    // 6 logische Paare (insgesamt 12 Karten)
+    const cardData = [
+        { id: 1, text: "полтинник рублей", type: "Russisch" },
+        { id: 1, text: "50 Rubel", type: "Bedeutung" },
+        
+        { id: 2, text: "полтинник лет", type: "Russisch" },
+        { id: 2, text: "50 Jahre", type: "Bedeutung" },
+        
+        { id: 3, text: "Это стоит полтинник.", type: "Russisch" },
+        { id: 3, text: "Das kostet einen Fuffziger.", type: "Bedeutung" },
+        
+        { id: 4, text: "Мне полтинник.", type: "Russisch" },
+        { id: 4, text: "Ich werde fünfzig.", type: "Bedeutung" },
+        
+        { id: 5, text: "половина", type: "Herkunft" },
+        { id: 5, text: "Hälfte", type: "Bedeutung" },
+        
+        { id: 6, text: "пятьдесят", type: "Standardsprache" },
+        { id: 6, text: "fünfzig", type: "Bedeutung" }
+    ];
+
+    let firstSelectedCard = null;
+    let secondSelectedCard = null;
+    let lockBoard = false;
+    let matchesFound = 0;
+
+    function shuffle(array) {
+        return array.sort(() => Math.random() - 0.5);
+    }
+
+    function initGame() {
+        const grid = document.getElementById('card-grid');
+        const resultBox = document.getElementById('result-box');
+        const gameBox = document.getElementById('game-box');
+        
+        // Reset Zustand
+        grid.innerHTML = "";
+        resultBox.style.display = "none";
+        gameBox.style.display = "block";
+        firstSelectedCard = null;
+        secondSelectedCard = null;
+        lockBoard = false;
+        matchesFound = 0;
+
+        // Karten zufällig mischen
+        const shuffledCards = shuffle([...cardData]);
+
+        // Karten im DOM aufbauen
+        shuffledCards.forEach((data, index) => {
+            const card = document.createElement('div');
+            card.className = 'memory-card';
+            card.dataset.pairId = data.id;
+            card.dataset.index = index;
+            
+            card.innerHTML = `
+                <div>${data.text}</div>
+                <div class="card-style-hint">${data.type}</div>
+            `;
+            
+            card.onclick = () => selectCard(card);
+            grid.appendChild(card);
+        });
+    }
+
+    function selectCard(card) {
+        if (lockBoard) return;
+        if (card === firstSelectedCard) return;
+
+        card.classList.add('selected');
+
+        if (!firstSelectedCard) {
+            firstSelectedCard = card;
+            return;
+        }
+
+        secondSelectedCard = card;
+        lockBoard = true;
+
+        checkMatch();
+    }
+
+    function checkMatch() {
+        const isMatch = firstSelectedCard.dataset.pairId === secondSelectedCard.dataset.pairId;
+
+        if (isMatch) {
+            disableCards();
+        } else {
+            unselectCards();
+        }
+    }
+
+    function disableCards() {
+        firstSelectedCard.classList.remove('selected');
+        secondSelectedCard.classList.remove('selected');
+        
+        // Fügt die Klasse für das langsame Ausblenden (CSS opacity) hinzu
+        firstSelectedCard.classList.add('matched');
+        secondSelectedCard.classList.add('matched');
+
+        matchesFound++;
+
+        // Wenn alle 6 Paare gelöst sind
+        if (matchesFound === cardData.length / 2) {
+            setTimeout(() => {
+                document.getElementById('game-box').style.display = "none";
+                document.getElementById('result-box').style.display = "block";
+            }, 900); // Wartet die CSS-Transition ab
+        }
+
+        resetBoard();
+    }
+
+    function unselectCards() {
+        // Bei falscher Paarung Karten nach 1 Sekunde wieder normal anzeigen
+        setTimeout(() => {
+            firstSelectedCard.classList.remove('selected');
+            secondSelectedCard.classList.remove('selected');
+            resetBoard();
+        }, 1000);
+    }
+
+    function resetBoard() {
+        firstSelectedCard = null;
+        secondSelectedCard = null;
+        lockBoard = false;
+    }
+
+    // Spiel direkt beim Laden initialisieren
+    window.onload = initGame;
+</script>
+
+</body>
+</html>
