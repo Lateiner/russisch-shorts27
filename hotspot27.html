@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interaktive Hotspot-Aufgabe: Полтинник</title>
+    <style>
+        :root {
+            --bg-page: #f0f2f5;        /* Angenehmes, helles Grau für den Hintergrund */
+            --bg-card: #ffffff;        /* Reines Weiß für das Hauptfenster */
+            --bg-accent: #f8fafc;      /* Sehr helles Graublau für Boxen */
+            --text-dark: #1e293b;      /* Sattes Dunkelgrau für beste Lesbarkeit */
+            --text-muted: #64748b;     /* Dezentes Grau für Beschreibungen */
+            
+            --success: #10b981;        /* Modernes Smaragdgrün */
+            --success-light: rgba(16, 185, 129, 0.15);
+            --danger: #ef4444;         /* Kräftiges Korallenrot */
+            --danger-light: rgba(239, 68, 68, 0.15);
+            --primary: #475569;        /* Schiefergrau für Steuerelemente */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-page);
+            color: var(--text-dark);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .game-container {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 30px;
+            width: 100%;
+            max-width: 680px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.03);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .instruction {
+            color: var(--text-muted);
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        /* Fokus-Box für den aktuellen russischen Satz */
+        .target-sentence-box {
+            background: var(--bg-accent);
+            border: 2px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .target-sentence {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            letter-spacing: 0.5px;
+        }
+
+        /* Grafikbereich */
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            background: var(--bg-accent);
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 15px;
+            overflow: hidden;
+        }
+
+        svg {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* Hotspot Basis-Design */
+        .hotspot {
+            cursor: pointer;
+            fill: transparent;
+            stroke: transparent;
+            stroke-width: 2;
+            transition: all 0.25s ease-in-out;
+        }
+
+        /* Hover-Effekte auf PCs */
+        @media (hover: hover) {
+            .hotspot:hover {
+                fill: rgba(0, 0, 0, 0.03);
+                stroke: var(--primary);
+                stroke-dasharray: 6;
+            }
+        }
+
+        /* Dynamisches Feedback beim Anklicken */
+        .hotspot.correct-hit {
+            fill: var(--success-light) !important;
+            stroke: var(--success) !important;
+            stroke-width: 4px !important;
+        }
+
+        .hotspot.wrong-hit {
+            fill: var(--danger-light) !important;
+            stroke: var(--danger) !important;
+            stroke-width: 4px !important;
+        }
+
+        /* Feedback-Texte unter dem Bild */
+        .feedback-text {
+            margin-top: 20px;
+            min-height: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            line-height: 1.5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 10px;
+        }
+
+        .text-correct { color: var(--success); }
+        .text-wrong { color: var(--danger); }
+
+        /* Weiter-Button */
+        .next-btn {
+            background: var(--text-dark);
+            color: white;
+            border: none;
+            padding: 14px 40px;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+            display: none;
+            margin: 15px auto 0 auto;
+        }
+        .next-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+        }
+
+        /* Fortschrittsanzeige unten */
+        .progress-container {
+            margin-top: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            border-top: 1px solid #e2e8f0;
+            padding-top: 20px;
+        }
+
+        .progress-bar {
+            background: #e2e8f0;
+            border-radius: 10px;
+            height: 8px;
+            width: 75%;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: var(--primary);
+            height: 100%;
+            width: 0%;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Endbildschirm */
+        .result-box {
+            display: none;
+            padding: 20px 0;
+        }
+
+        .result-box h2 {
+            color: var(--success);
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+        }
+
+        .restart-btn {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 14px 45px;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+            margin-top: 25px;
+            transition: all 0.2s;
+        }
+        .restart-btn:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+
+        @media (max-width: 480px) {
+            h1 { font-size: 1.5rem; }
+            .target-sentence { font-size: 1.4rem; }
+            .game-container { padding: 20px 15px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div id="game-box">
+        <h1>Bedeutungs-Check: Полтинник</h1>
+        <p class="instruction">Lies den russischen Satz laut vor. Klicke dann auf das Bildsymbol, das die korrekte Bedeutung von „полтинник“ abbildet.</p>
+
+        <div class="target-sentence-box">
+            <div class="target-sentence" id="sentence-display">Wird geladen...</div>
+        </div>
+
+        <div class="canvas-container">
+            <svg viewBox="0 0 600 340" xmlns="http://www.w3.org/2000/svg">
+                <!-- Dezente Trennlinie -->
+                <line x1="300" y1="20" x2="300" y2="320" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="6"/>
+
+                <!-- LINKES SYMBOL: ALTER / GEBURTSTAG -->
+                <g id="torte-grafik" opacity="0.9">
+                    <rect x="65" y="210" width="170" height="70" rx="12" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2"/>
+                    <rect x="85" y="150" width="130" height="60" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2"/>
+                    <rect x="144" y="95" width="12" height="55" fill="#64748b" rx="2"/>
+                    <polygon points="150,68 142,92 158,92" fill="#475569"/>
+                    <text x="150" y="200" font-size="38" font-weight="800" fill="#0f172a" text-anchor="middle">50</text>
+                    <text x="150" y="315" font-size="14" font-weight="700" fill="#64748b" text-anchor="middle">Alter (лет)</text>
+                </g>
+
+                <!-- RECHTES SYMBOL: GELD / PREIS -->
+                <g id="schwein-grafik" opacity="0.9">
+                    <ellipse cx="450" cy="200" rx="85" ry="65" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2"/>
+                    <polygon points="385,145 375,115 405,130" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2"/>
+                    <rect x="350" y="185" width="18" height="28" rx="4" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2"/>
+                    <rect x="405" y="260" width="18" height="28" fill="#cbd5e1" stroke="#94a3b8" stroke-width="2"/>
+                    <rect x="477" y="260" width="18" height="28" fill="#cbd5e1" stroke="#94a3b8" stroke-width="2"/>
+                    <rect x="441" y="125" width="18" height="8" rx="2" fill="#475569"/>
+                    <circle cx="450" cy="100" r="18" fill="#f1f5f9" stroke="#475569" stroke-width="2"/>
+                    <text x="450" y="106" font-size="18" font-weight="800" fill="#0f172a" text-anchor="middle">₽</text>
+                    <text x="450" y="315" font-size="14" font-weight="700" fill="#64748b" text-anchor="middle">Geld (рубли)</text>
+                </g>
+
+                <!-- UNSICHTBARE INTERAKTIVE INTERFACES -->
+                <rect id="hotspot-alter" class="hotspot" x="15" y="15" width="270" height="310" rx="16" onclick="handleHotspotClick('alter')"/>
+                <rect id="hotspot-geld" class="hotspot" x="315" y="15" width="270" height="310" rx="16" onclick="handleHotspotClick('geld')"/>
+            </svg>
+        </div>
+
+        <div class="feedback-text" id="feedback-text"></div>
+        <button class="next-btn" id="next-btn" onclick="nextQuestion()">Nächste Aufgabe</button>
+
+        <div class="progress-container">
+            <span id="progress-text">Frage 1 von 6</span>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="result-box" id="result-box">
+        <h2>Perfekt gemeistert! 🎉</h2>
+        <p id="final-score" style="color: var(--text-dark); font-size: 1.1rem; margin-bottom: 12px; font-weight: 500;"></p>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">Umgangssprachliche Nuancen sind ein echter Meilenstein. Du hast den Unterschied fehlerfrei verinnerlicht!</p>
+        <button class="restart-btn" onclick="restartGame()">Übung neustarten</button>
+    </div>
+</div>
+
+<script>
+    // Didaktisch kuratierte, grammatikalisch korrekte Beispielsätze
+    const questions = [
+        { sentence: "Это стоит полтинник.", correctType: "geld", explanation: "Richtig! „Das kostet einen Fuffziger.“ (Umgangssprachlich für 50 Rubel)." },
+        { sentence: "Ему завтра полтинник.", correctType: "alter", explanation: "Richtig! „Er wird morgen fünfzig.“ (Bezieht sich auf das Lebensalter)." },
+        { sentence: "Дай мне один полтинник.", correctType: "geld", explanation: "Richtig! „Gib mir einen Fünfzigrubelschein / eine Fünfzigrubelmünze.“" },
+        { sentence: "Скоро маме полтинник.", correctType: "alter", explanation: "Richtig! „Mama wird bald fünfzig.“ (Hier ist wieder das Alter gemeint)." },
+        { sentence: "Я купил книгу за полтинник.", correctType: "geld", explanation: "Richtig! „Ich habe das Buch für einen Fuffziger gekauft.“" },
+        { sentence: "Вам уже полтинник?", correctType: "alter", explanation: "Richtig! „Sind Sie schon fünfzig?“ (Direkte Frage nach dem 50. Geburtstag)." }
+    ];
+
+    let currentIndex = 0;
+    let score = 0;
+    let canClick = true;
+
+    function loadQuestion() {
+        if (currentIndex >= questions.length) {
+            showResults();
+            return;
+        }
+
+        // Hotspots in den Ausgangszustand versetzen
+        document.getElementById('hotspot-geld').className = 'hotspot';
+        document.getElementById('hotspot-alter').className = 'hotspot';
+        
+        // Texte anpassen
+        document.getElementById('sentence-display').innerText = questions[currentIndex].sentence;
+        document.getElementById('feedback-text').innerText = '';
+        document.getElementById('next-btn').style.display = 'none';
+        
+        // Statusbalken aktualisieren
+        document.getElementById('progress-text').innerText = `Frage ${currentIndex + 1} von ${questions.length}`;
+        document.getElementById('progress-fill').style.width = ((currentIndex / questions.length) * 100) + "%";
+        
+        canClick = true;
+    }
+
+    function handleHotspotClick(clickedType) {
+        if (!canClick) return;
+
+        const current = questions[currentIndex];
+        const feedback = document.getElementById('feedback-text');
+        const clickedHotspot = document.getElementById('hotspot-' + clickedType);
+
+        canClick = false; 
+
+        if (clickedType === current.correctType) {
+            // Direktes positives Feedback (Grün einfärben)
+            clickedHotspot.classList.add('correct-hit');
+            feedback.innerHTML = `<span class="text-correct">✨ ${current.explanation}</span>`;
+            score++;
+            document.getElementById('next-btn').style.display = 'block';
+        } else {
+            // Direktes negatives Feedback (Rot einfärben)
+            clickedHotspot.classList.add('wrong-hit');
+            feedback.innerHTML = `<span class="text-wrong">Ops! Das war die falsche Kategorie.</span>`;
+            
+            // Automatische Korrekturauflösung nach 1,2 Sekunden
+            setTimeout(() => {
+                clickedHotspot.classList.remove('wrong-hit');
+                document.getElementById('hotspot-' + current.correctType).classList.add('correct-hit');
+                feedback.innerHTML = `<span class="text-correct">Hinweis: ${current.explanation}</span>`;
+                document.getElementById('next-btn').style.display = 'block';
+            }, 1200);
+        }
+    }
+
+    function nextQuestion() {
+        currentIndex++;
+        loadQuestion();
+    }
+
+    function showResults() {
+        document.getElementById('game-box').style.display = 'none';
+        document.getElementById('result-box').style.display = 'block';
+        document.getElementById('final-score').innerText = `Ergebnis: ${score} von ${questions.length} Sätzen fehlerfrei zugeordnet!`;
+    }
+
+    function restartGame() {
+        currentIndex = 0;
+        score = 0;
+        document.getElementById('game-box').style.display = 'block';
+        document.getElementById('result-box').style.display = 'none';
+        loadQuestion();
+    }
+
+    window.onload = loadQuestion;
+</script>
+
+</body>
+</html>
