@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interaktive Russisch-Lernkartei</title>
+    <style>
+        :root {
+            --bg-page: #f2f7f4;
+            --primary: #2d6a4f;
+            --primary-light: #40916c;
+            --primary-dark: #1b4332;
+            --accent: #52b788;
+            --card-front-bg: #ffffff;
+            --card-back-bg: #e9f5ed;
+            --text-main: #1b4332;
+            --text-muted: #5c7f6f;
+            --shadow: 0 10px 25px rgba(27, 67, 50, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 550px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            color: var(--primary-dark);
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        header p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        /* Fortschrittsanzeige */
+        .progress-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .progress-text {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--primary);
+            background: rgba(64, 145, 108, 0.1);
+            padding: 4px 14px;
+            border-radius: 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e2ede7;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* 3D Karteikarten-Bühne */
+        .flashcard-stage {
+            width: 100%;
+            height: 320px;
+            perspective: 1000px;
+            cursor: pointer;
+        }
+
+        .flashcard {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--shadow);
+            border-radius: 24px;
+        }
+
+        .flashcard.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            text-align: center;
+            border: 2px solid rgba(45, 106, 79, 0.08);
+        }
+
+        .card-front {
+            background-color: var(--card-front-bg);
+            color: var(--text-main);
+        }
+
+        .card-back {
+            background-color: var(--card-back-bg);
+            color: var(--primary-dark);
+            transform: rotateY(180deg);
+            border-color: rgba(45, 106, 79, 0.15);
+        }
+
+        /* Inhalte innerhalb der Karten */
+        .word {
+            font-weight: 700;
+            line-height: 1.3;
+            word-wrap: break-word;
+            max-width: 100%;
+        }
+
+        .card-front .word {
+            color: var(--primary-dark);
+        }
+
+        .card-back .word {
+            color: #2d6a4f;
+        }
+
+        .note {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            line-height: 1.4;
+            max-width: 90%;
+        }
+
+        .card-side-indicator {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            opacity: 0.6;
+        }
+
+        /* Steuerungselemente */
+        .controls-grid {
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .btn {
+            background-color: #ffffff;
+            color: var(--primary);
+            border: 2px solid var(--primary-light);
+            padding: 14px 20px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            user-select: none;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-light);
+            color: #ffffff;
+            border-color: var(--primary-light);
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-main {
+            grid-column: span 1;
+        }
+
+        .btn-full {
+            grid-column: span 2;
+            background-color: var(--primary);
+            color: #ffffff;
+            border-color: var(--primary);
+        }
+
+        .btn-full:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+
+        /* Keyboard-Hilfe Footer */
+        footer {
+            margin-top: 5px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        /* Responsive Anpassungen */
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            header h1 {
+                font-size: 1.5rem;
+            }
+            .flashcard-stage {
+                height: 280px;
+            }
+            .card-face {
+                padding: 20px;
+            }
+            .btn {
+                padding: 12px 16px;
+                font-size: 0.9rem;
+            }
+            footer {
+                display: none; /* Tastatur-Steuerungshinweise auf Mobilgeräten verbergen */
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Russisch-Lernkartei</h1>
+        <p>Thema: Umgangssprache & Wortschatz rund um „полтинник“</p>
+    </header>
+
+    <!-- Fortschritt -->
+    <div class="progress-container">
+        <div class="progress-text" id="progress-text">0 / 0</div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+    </div>
+
+    <!-- Karte -->
+    <div class="flashcard-stage" id="card-stage" onclick="flipCard()" role="button" aria-label="Karteikarte umdrehen" tabindex="0">
+        <div class="flashcard" id="flashcard">
+            <div class="card-face card-front">
+                <span class="card-side-indicator">Russisch</span>
+                <div class="word" id="front-text">Загрузка...</div>
+                <div class="note" id="front-note"></div>
+            </div>
+            <div class="card-face card-back">
+                <span class="card-side-indicator">Deutsch</span>
+                <div class="word" id="back-text">Lade...</div>
+                <div class="note" id="back-note"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="controls-grid">
+        <button class="btn btn-main" onclick="prevCard()">← Vorherige</button>
+        <button class="btn btn-main" onclick="nextCard()">Nächste →</button>
+        <button class="btn" onclick="shuffleCards()">🔀 Mischen</button>
+        <button class="btn" onclick="goToStart()">↩ An den Anfang</button>
+    </div>
+
+    <footer>
+        Steuerung über die Tastatur:<br>
+        <strong>Leertaste / Enter</strong>: Umdrehen &nbsp;|&nbsp; 
+        <strong>← / →</strong>: Navigieren &nbsp;|&nbsp; 
+        <strong>Pos1 (Home)</strong>: Anfang
+    </footer>
+</div>
+
+<script>
+    // Strukturierte Vokabeldatenbank (Automatisch aufgeteilt aus der Liste)
+    const originalCards = [
+        { front: "ба́бушка", back: "Großmutter, Oma", frontNote: "", backNote: "" },
+        { front: "брать / взять", back: "nehmen", frontNote: "Verbpaar: NSV / SV", backNote: "" },
+        { front: "бу́дет", back: "wird sein, es wird geben", frontNote: "", backNote: "3. Person Singular Futur" },
+        { front: "бума́жка", back: "Geldschein, Zettel", frontNote: "", backNote: "Umgangssprachlich für Geldschein" },
+        { front: "быть", back: "sein", frontNote: "Grundverb", backNote: "" },
+        { front: "вам", back: "Ihnen, euch", frontNote: "Pronomen", backNote: "Dativ-Form" },
+        { front: "ве́щь", back: "Ding, Sache, Kleidungsstück", frontNote: "Substantiv (f.)", backNote: "" },
+        { front: "вы́глядеть", back: "aussehen", frontNote: "Verb (NSV)", backNote: "" },
+        { front: "да́ть / дава́ть", back: "geben", frontNote: "Verbpaar: SV / NSV", backNote: "" },
+        { front: "де́ньги", back: "Geld", frontNote: "Pluraletantum", backNote: "Existiert im Russischen nur im Plural" },
+        { front: "де́ржи", back: "hier, nimm", frontNote: "Imperativ", backNote: "Umgangssprachlich, Imperativ Singular" },
+        { front: "дива́н", back: "Sofa", frontNote: "", backNote: "" },
+        { front: "для", back: "für", frontNote: "Präposition", backNote: "Regiert zwingend den Genitiv" },
+        { front: "до́рого", back: "teuer", frontNote: "Adverb", backNote: "" },
+        { front: "дорого́й", back: "teuer, wertvoll", frontNote: "Adjektiv (m.)", backNote: "" },
+        { front: "друг", back: "Freund", frontNote: "", backNote: "" },
+        { front: "е́й", back: "ihr", frontNote: "Pronomen", backNote: "Dativ-Form" },
+        { front: "ему́", back: "ihm", frontNote: "Pronomen", backNote: "Dativ-Form" },
+        { front: "е́сть", back: "es gibt, vorhanden sein", frontNote: "", backNote: "" },
+        { front: "ещё", back: "noch", frontNote: "", backNote: "" },
+        { front: "за", back: "für", frontNote: "Präposition", backNote: "Verwendung beim Preis / Kauf (regiert Akkusativ)" },
+        { front: "за́втра", back: "morgen", frontNote: "Zeitantrag", backNote: "" },
+        { front: "журна́л", back: "Zeitschrift, Magazin", frontNote: "", backNote: "" },
+        { front: "име́ть", back: "haben", frontNote: "Verb (NSV)", backNote: "" },
+        { front: "кни́га", back: "Buch", frontNote: "", backNote: "" },
+        { front: "кошелёк", back: "Portemonnaie, Geldbörse", frontNote: "", backNote: "" },
+        { front: "купи́ть / покупа́ть", back: "kaufen", frontNote: "Verbpaar: SV / NSV", backNote: "" },
+        { front: "ле́т", back: "Jahre", frontNote: "Altersangabe", backNote: "Genitiv Plural; wird bei Altersangaben ab der Zahl 5 genutzt" },
+        { front: "ма́ма", back: "Mutter, Mama", frontNote: "", backNote: "" },
+        { front: "ма́ме", back: "der Mutter, für Mama", frontNote: "Dativ-Form", backNote: "" },
+        { front: "ме́лкий", back: "klein, gering", frontNote: "Adjektiv", backNote: "Oft im Sinne von Kleingeld benutzt" },
+        { front: "мне", back: "mir", frontNote: "Pronomen", backNote: "Dativ-Form" },
+        { front: "моне́та", back: "Münze", frontNote: "", backNote: "" },
+        { front: "на", back: "auf, zu", frontNote: "Präposition", backNote: "" },
+        { front: "найти́ / находи́ть", back: "finden", frontNote: "Verbpaar: SV / NSV", backNote: "" },
+        { front: "назад", back: "zurück", frontNote: "", backNote: "" },
+        { front: "нра́виться / понра́виться", back: "gefallen", frontNote: "Verbpaar: NSV / SV", backNote: "" },
+        { front: "ну́жен", back: "nötig, notwendig", frontNote: "Kurzform", backNote: "Prädikatives Kurzadjektiv (Maskulinum)" },
+        { front: "оди́н", back: "ein, eins", frontNote: "", backNote: "" },
+        { front: "отли́чно", back: "hervorragend, ausgezeichnet", frontNote: "", backNote: "" },
+        { front: "оце́нка", back: "Note, Bewertung", frontNote: "", backNote: "" },
+        { front: "о́чередь", back: "Reihe, Reihenfolge, Warteschlange", frontNote: "Substantiv (f.)", backNote: "" },
+        { front: "оши́бка", back: "Fehler", frontNote: "", backNote: "" },
+        { front: "оте́ц", back: "Vater", frontNote: "", backNote: "" },
+        { front: "пе́нсия", back: "Rente", frontNote: "", backNote: "" },
+        { front: "пожа́луйста", back: "bitte", frontNote: "", backNote: "" },
+        { front: "полти́нник", back: "Fuffziger, 50 Rubel, 50 Jahre", frontNote: "Umgangssprachliches Kernwort", backNote: "Bedeutet entweder ein 50-Rubel-Stück/Schein oder das Lebensalter von 50 Jahren" },
+        { front: "получи́ть / получа́ть", back: "bekommen, erhalten", frontNote: "Verbpaar: SV / NSV", backNote: "" },
+        { front: "помо́чь / помога́ть", back: "helfen", frontNote: "Verbpaar: SV / NSV", backNote: "" },
+        { front: "понима́ть / поня́ть", back: "verstehen", frontNote: "Verbpaar: NSV / SV", backNote: "" },
+        { front: "пра́вильно", back: "richtig", frontNote: "", backNote: "" },
+        { front: "пра́здник", back: "Fest, Feiertag", frontNote: "", backNote: "" },
+        { front: "прове́рить / проверя́ть", back: "prüfen, überprüfen", frontNote: "Verbpaar: SV / NSV", backNote: "" },
+        { front: "ру́бль", back: "Rubel", frontNote: "Währung", backNote: "Männliches Substantiv mit Weichheitszeichen" },
+        { front: "с", back: "von, mit", frontNote: "Präposition", backNote: "Hier im Sinne von 'von dir' (verlangt den Genitiv)" },
+        { front: "сего́дня", back: "heute", frontNote: "", backNote: "" },
+        { front: "ско́лько", back: "wie viel", frontNote: "Fragewort", backNote: "" },
+        { front: "ско́ро", back: "bald", frontNote: "", backNote: "" },
+        { front: "слова́", back: "Wörter", frontNote: "Pluralform", backNote: "" },
+        { front: "сло́во", back: "Wort", frontNote: "Singularform (n.)", backNote: "" },
+        { front: "сто́ить", back: "kosten", frontNote: "Verb (NSV)", backNote: "" },
+        { front: "тебе́", back: "dir", frontNote: "Pronomen", backNote: "Dativ-Form" },
+        { front: "твой", back: "dein", frontNote: "", backNote: "" },
+        { front: "то́лько", back: "nur, erst", frontNote: "", backNote: "" },
+        { front: "у", back: "bei", frontNote: "Präposition", backNote: "In Verbindung mit Genitiv für Besitzkonstruktionen (у меня есть)" },
+        { front: "уже́", back: "schon", frontNote: "", backNote: "" },
+        { front: "хотя́", back: "obwohl", frontNote: "Konjunktion", backNote: "" },
+        { front: "цена́", back: "Preis", frontNote: "", backNote: "" },
+        { front: "че́к", back: "Kassenbon, Beleg, Scheck", frontNote: "", backNote: "" },
+        { front: "э́то", back: "das, dies", frontNote: "Demonstrativpronomen", backNote: "" }
+    ];
+
+    let cards = [...originalCards];
+    let currentIndex = 0;
+
+    // Funktion zur dynamischen Anpassung der Schriftgröße bei langen Texten
+    function adjustFontSize() {
+        const frontTextElem = document.getElementById('front-text');
+        const backTextElem = document.getElementById('back-text');
+        
+        // Zurücksetzen auf Standardwerte vor der Messung
+        frontTextElem.style.fontSize = '2.2rem';
+        backTextElem.style.fontSize = '1.8rem';
+
+        // Front anpassen (Russischer Begriff)
+        if (frontTextElem.innerText.length > 25) {
+            frontTextElem.style.fontSize = '1.5rem';
+        } else if (frontTextElem.innerText.length > 15) {
+            frontTextElem.style.fontSize = '1.8rem';
+        }
+
+        // Back anpassen (Deutsche Übersetzung)
+        if (backTextElem.innerText.length > 50) {
+            backTextElem.style.fontSize = '1.2rem';
+        } else if (backTextElem.innerText.length > 25) {
+            backTextElem.style.fontSize = '1.5rem';
+        }
+    }
+
+    function updateCard() {
+        const card = cards[currentIndex];
+        const flashcardElem = document.getElementById('flashcard');
+        
+        // Erst die Karte auf die Vorderseite zurückdrehen, falls sie gedreht war
+        flashcardElem.classList.remove('is-flipped');
+        
+        // Kurze Verzögerung für die Texte beim Wechsel, damit man die Drehung nicht manipuliert sieht
+        setTimeout(() => {
+            document.getElementById('front-text').innerText = card.front;
+            document.getElementById('front-note').innerText = card.frontNote;
+            document.getElementById('back-text').innerText = card.back;
+            document.getElementById('back-note').innerText = card.backNote;
+            
+            adjustFontSize();
+        }, 150);
+
+        // Fortschritts-UI aktualisieren
+        document.getElementById('progress-text').innerText = `${currentIndex + 1} / ${cards.length}`;
+        document.getElementById('progress-fill').style.width = `${((currentIndex + 1) / cards.length) * 100}%`;
+    }
+
+    function flipCard() {
+        document.getElementById('flashcard').classList.toggle('is-flipped');
+    }
+
+    function nextCard() {
+        if (currentIndex < cards.length - 1) {
+            currentIndex++;
+        } else {
+            currentIndex = 0; // Am Ende fängt es von vorn an (Loop)
+        }
+        updateCard();
+    }
+
+    function prevCard() {
+        if (currentIndex > 0) {
+            currentIndex--;
+        } else {
+            currentIndex = cards.length - 1; // Am Anfang springt es zum Ende (Loop)
+        }
+        updateCard();
+    }
+
+    function goToStart() {
+        currentIndex = 0;
+        updateCard();
+    }
+
+    function shuffleCards() {
+        // Fisher-Yates Shuffle Algorithmus
+        for (let i = cards.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [cards[i], cards[j]] = [cards[j], cards[i]];
+        }
+        currentIndex = 0;
+        updateCard();
+        
+        // Visuelles Feedback für den Klickerfolg
+        const textContainer = document.getElementById('progress-text');
+        textContainer.style.transform = 'scale(1.1)';
+        setTimeout(() => textContainer.style.transform = 'scale(1)', 200);
+    }
+
+    // Eventlistener für Tastatursteuerung
+    document.addEventListener('keydown', function(event) {
+        // Verhindert das Scrollen der Seite bei Leertaste
+        if (event.code === "Space" && event.target === document.body) {
+            event.preventDefault();
+        }
+
+        switch(event.code) {
+            case "Space":
+            case "Enter":
+                flipCard();
+                break;
+            case "ArrowRight":
+                nextCard();
+                break;
+            case "ArrowLeft":
+                prevCard();
+                break;
+            case "Home":
+                event.preventDefault();
+                goToStart();
+                break;
+        }
+    });
+
+    // Erlaubt das Umdrehen der Karte auch, wenn sie via Tastatur (Tabulator) fokussiert wurde
+    document.getElementById('card-stage').addEventListener('keydown', function(e) {
+        if (e.code === "Space" || e.code === "Enter") {
+            e.stopPropagation(); // Verhindert doppeltes Feuern durch den globalen Listener
+            flipCard();
+        }
+    });
+
+    // Initialisierung beim Laden
+    window.onload = function() {
+        updateCard();
+    };
+</script>
+
+</body>
+</html>
