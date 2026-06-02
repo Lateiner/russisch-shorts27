@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Satzbau-Training: Полтинник (6 Aufgaben)</title>
+    <style>
+        :root {
+            --bg-page: #f0f2f5;
+            --bg-card: #ffffff;
+            --bg-accent: #f8fafc;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            
+            --success: #10b981;
+            --success-light: #ecfdf5;
+            --danger: #ef4444;
+            --danger-light: #fef2f2;
+            --primary: #475569;
+            --primary-light: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-page);
+            color: var(--text-dark);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .game-container {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 30px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .instruction {
+            color: var(--text-muted);
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .task-box {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 25px;
+            border-left: 5px solid var(--primary);
+            text-align: left;
+        }
+
+        .translation-target {
+            color: #0284c7;
+            font-weight: 700;
+            display: block;
+            margin-top: 4px;
+        }
+
+        /* Zielbereich für den Satzbau */
+        .sentence-zone {
+            background: var(--bg-accent);
+            border: 2px dashed #cbd5e1;
+            border-radius: 14px;
+            min-height: 75px;
+            padding: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.25s ease;
+        }
+
+        .sentence-zone.correct-zone {
+            background: var(--success-light);
+            border-color: var(--success);
+        }
+
+        .sentence-zone.wrong-zone {
+            background: var(--danger-light);
+            border-color: var(--danger);
+        }
+
+        /* Pool der ungeordneten Wörter */
+        .word-pool {
+            background: var(--bg-card);
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 20px;
+            min-height: 75px;
+            margin-bottom: 25px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .word-chip {
+            background: var(--bg-card);
+            border: 2px solid var(--primary-light);
+            color: var(--text-dark);
+            padding: 12px 22px;
+            border-radius: 25px;
+            font-size: 1.15rem;
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .word-chip:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+        }
+
+        /* Feedback */
+        .feedback-text {
+            min-height: 35px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .text-correct { color: var(--success); }
+        .text-wrong { color: var(--danger); }
+
+        /* Buttons & Steuerung */
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .action-btn {
+            padding: 14px 35px;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            transition: all 0.2s;
+        }
+
+        .btn-check {
+            background: var(--text-dark);
+            color: white;
+        }
+
+        .btn-check:hover:not(:disabled) {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .btn-check:disabled {
+            background: #cbd5e1;
+            color: #94a3b8;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .btn-next {
+            background: var(--success);
+            color: white;
+            display: none;
+        }
+
+        .btn-next:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        /* Fortschritt */
+        .progress-container {
+            margin-top: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            border-top: 1px solid #e2e8f0;
+            padding-top: 20px;
+        }
+
+        .progress-bar {
+            background: #e2e8f0;
+            border-radius: 10px;
+            height: 8px;
+            width: 70%;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: var(--primary);
+            height: 100%;
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+
+        /* Ergebnis-Box */
+        .result-box {
+            display: none;
+            padding: 15px 0;
+        }
+
+        .result-box h2 {
+            color: var(--success);
+            margin-bottom: 12px;
+        }
+
+        .btn-restart {
+            background: var(--text-dark);
+            color: white;
+            margin-top: 15px;
+        }
+        .btn-restart:hover { opacity: 0.9; }
+
+        @media (max-width: 480px) {
+            .game-container { padding: 20px 15px; }
+            h1 { font-size: 1.5rem; }
+            .word-chip { padding: 10px 18px; font-size: 1rem; }
+            .btn-group { flex-direction: column; }
+            .action-btn { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div id="game-box">
+        <h1>Schüttelsatz-Training</h1>
+        <p class="instruction">Bringe die Wörter in die richtige grammatikalische Reihenfolge. Klicke die Wortbausteine an, um sie zu bewegen.</p>
+
+        <div class="task-box">
+            Aufgabe: Bilde den russischen Satz für:
+            <span class="translation-target" id="translation-display">...</span>
+        </div>
+
+        <!-- Satz-Bauzone -->
+        <div class="sentence-zone" id="sentence-zone" onclick="returnLastWord(event)"></div>
+
+        <!-- Wort-Pool -->
+        <div class="word-pool" id="word-pool"></div>
+
+        <div class="feedback-text" id="feedback-text"></div>
+
+        <div class="btn-group">
+            <button class="action-btn btn-check" id="check-btn" onclick="checkSentence()">Satz prüfen</button>
+            <button class="action-btn btn-next" id="next-btn" onclick="nextQuestion()">Nächste Aufgabe</button>
+        </div>
+
+        <div class="progress-container">
+            <span id="progress-text">Frage 1 von 6</span>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="result-box" id="result-box">
+        <h2>Satzbau erfolgreich beendet! 🎉</h2>
+        <p id="final-score" style="color: var(--text-dark); font-size: 1.1rem; font-weight: 500; margin-bottom: 10px;"></p>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">Du beherrschst die russische Wortstellung im Umgang mit „полтинник“ nun perfekt!</p>
+        <button class="action-btn btn-restart" onclick="restartGame()">Übung neustarten</button>
+    </div>
+</div>
+
+<script>
+    // 6 abwechslungsreiche Schüttelsatz-Aufgaben
+    const questions = [
+        {
+            german: "„Er wird morgen 50.“",
+            correctOrder: ["Ему", "завтра", "будет", "полтинник."],
+            startingWords: ["будет", "завтра", "Ему", "полтинник."]
+        },
+        {
+            german: "„Das kostet einen Fuffziger (50 Rubel).“",
+            correctOrder: ["Это", "стоит", "полтинник."],
+            startingWords: ["стоит", "полтинник.", "Это"]
+        },
+        {
+            german: "„Gib mir einen Fünfzigrubelschein.“",
+            correctOrder: ["Дай", "мне", "один", "полтинник."],
+            startingWords: ["один", "мне", "полтинник.", "Дай"]
+        },
+        {
+            german: "„Mama wird bald 50.“",
+            correctOrder: ["Скоро", "маме", "полтинник."],
+            startingWords: ["маме", "полтинник.", "Скоро"]
+        },
+        {
+            german: "„Ich habe das Buch für 50 Rubel gekauft.“",
+            correctOrder: ["Я", "купил", "книгу", "за", "полтинник."],
+            startingWords: ["книгу", "за", "Я", "полтинник.", "купил"]
+        },
+        {
+            german: "„Sind Sie schon 50?“",
+            correctOrder: ["Вам", "уже", "полтинник?"],
+            startingWords: ["уже", "Вам", "полтинник?"]
+        }
+    ];
+
+    let currentIndex = 0;
+    let score = 0;
+    let currentSentence = [];
+    let gameActive = true;
+
+    function loadQuestion() {
+        if (currentIndex >= questions.length) {
+            showResults();
+            return;
+        }
+
+        const current = questions[currentIndex];
+        const pool = document.getElementById('word-pool');
+        const zone = document.getElementById('sentence-zone');
+        const feedback = document.getElementById('feedback-text');
+        
+        // UI zurücksetzen
+        pool.innerHTML = '';
+        zone.innerHTML = '';
+        feedback.innerText = '';
+        zone.className = 'sentence-zone';
+        currentSentence = [];
+        gameActive = true;
+        
+        document.getElementById('translation-display').innerText = current.german;
+        document.getElementById('check-btn').style.display = 'block';
+        document.getElementById('check-btn').disabled = false;
+        document.getElementById('next-btn').style.display = 'none';
+
+        // Fortschrittsanzeige aktualisieren
+        document.getElementById('progress-text').innerText = `Aufgabe ${currentIndex + 1} von ${questions.length}`;
+        document.getElementById('progress-fill').style.width = ((currentIndex / questions.length) * 100) + "%";
+
+        // Wort-Chips erzeugen
+        current.startingWords.forEach(word => {
+            const chip = document.createElement('div');
+            chip.className = 'word-chip';
+            chip.innerText = word;
+            chip.onclick = (e) => { e.stopPropagation(); moveWordToSentence(chip); };
+            pool.appendChild(chip);
+        });
+    }
+
+    function moveWordToSentence(chip) {
+        if (!gameActive) return;
+        const zone = document.getElementById('sentence-zone');
+        currentSentence.push(chip.innerText);
+        zone.appendChild(chip);
+        chip.onclick = (e) => { e.stopPropagation(); removeWordFromSentence(chip); };
+    }
+
+    function removeWordFromSentence(chip) {
+        if (!gameActive) return;
+        const pool = document.getElementById('word-pool');
+        const index = currentSentence.indexOf(chip.innerText);
+        if (index > -1) {
+            currentSentence.splice(index, 1);
+        }
+        pool.appendChild(chip);
+        chip.onclick = (e) => { e.stopPropagation(); moveWordToSentence(chip); };
+        
+        document.getElementById('feedback-text').innerText = '';
+        document.getElementById('sentence-zone').className = 'sentence-zone';
+    }
+
+    function returnLastWord(event) {
+        if (!gameActive || currentSentence.length === 0) return;
+        if (event.target.id === 'sentence-zone') {
+            const zone = document.getElementById('sentence-zone');
+            const lastChild = zone.lastElementChild;
+            if (lastChild) removeWordFromSentence(lastChild);
+        }
+    }
+
+    function checkSentence() {
+        if (currentSentence.length === 0) return;
+        
+        const current = questions[currentIndex];
+        const zone = document.getElementById('sentence-zone');
+        const feedback = document.getElementById('feedback-text');
+        
+        let isCorrect = true;
+        if (currentSentence.length !== current.correctOrder.length) {
+            isCorrect = false;
+        } else {
+            for (let i = 0; i < current.correctOrder.length; i++) {
+                if (currentSentence[i] !== current.correctOrder[i]) {
+                    isCorrect = false;
+                    break;
+                }
+            }
+        }
+
+        gameActive = false;
+        document.getElementById('check-btn').style.display = 'none';
+        document.getElementById('next-btn').style.display = 'block';
+
+        if (isCorrect) {
+            zone.className = 'sentence-zone correct-zone';
+            feedback.innerHTML = `<span class="text-correct">🎉 Ausgezeichnet! Richtig kombiniert.</span>`;
+            score++;
+        } else {
+            zone.className = 'sentence-zone wrong-zone';
+            const correctString = current.correctOrder.join(" ");
+            feedback.innerHTML = `<span class="text-wrong">Nicht ganz richtig. Korrekte Lösung: <br><strong style="color:var(--text-dark)">${correctString}</strong></span>`;
+        }
+    }
+
+    function nextQuestion() {
+        currentIndex++;
+        loadQuestion();
+    }
+
+    function showResults() {
+        document.getElementById('game-box').style.display = 'none';
+        document.getElementById('result-box').style.display = 'block';
+        document.getElementById('final-score').innerText = `Du hast ${score} von ${questions.length} Sätzen im ersten Versuch fehlerfrei gebaut!`;
+    }
+
+    function restartGame() {
+        currentIndex = 0;
+        score = 0;
+        document.getElementById('game-box').style.display = 'block';
+        document.getElementById('result-box').style.display = 'none';
+        loadQuestion();
+    }
+
+    window.onload = loadQuestion;
+</script>
+
+</body>
+</html>
