@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dialog-Training: Полтинник</title>
+    <style>
+        :root {
+            --bg-page: #e5e7eb;
+            --bg-chat: #ffffff;
+            --bg-bubble-in: #f1f5f9;
+            --bg-bubble-out-correct: #d1fae5;
+            --bg-bubble-out-wrong: #fee2e2;
+            
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            
+            --success: #10b981;
+            --danger: #ef4444;
+            --primary: #3b82f6;
+            --border: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-page);
+            color: var(--text-dark);
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .game-container {
+            background: var(--bg-chat);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 500px;
+            height: 90vh;
+            min-height: 550px;
+            max-height: 750px;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Messenger-Header */
+        .chat-header {
+            background: #f8fafc;
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-align: left;
+        }
+
+        .chat-avatar {
+            width: 42px;
+            height: 42px;
+            background: #cbd5e1;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+        }
+
+        .chat-user-info h2 {
+            font-size: 1.05rem;
+            font-weight: 700;
+        }
+
+        .chat-user-info p {
+            font-size: 0.8rem;
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        /* Chat-Verlauf Bereich */
+        .chat-history {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background: #f8fafc;
+        }
+
+        .chat-bubble {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 1.05rem;
+            line-height: 1.4;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .bubble-incoming {
+            background: var(--bg-bubble-in);
+            align-self: flex-start;
+            border-top-left-radius: 4px;
+            color: var(--text-dark);
+        }
+
+        .bubble-outgoing {
+            align-self: flex-end;
+            border-top-right-radius: 4px;
+            font-weight: 600;
+        }
+
+        .bubble-outgoing.correct {
+            background: var(--bg-bubble-out-correct);
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .bubble-outgoing.wrong {
+            background: var(--bg-bubble-out-wrong);
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .bubble-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+            display: block;
+            font-weight: normal;
+        }
+
+        /* Kontroll- und Auswahlbereich unten */
+        .chat-controls {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid var(--border);
+        }
+
+        .options-headline {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option-btn {
+            background: #ffffff;
+            border: 2px solid var(--border);
+            color: var(--text-dark);
+            padding: 14px 18px;
+            border-radius: 12px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: var(--primary);
+            background: #f0f6ff;
+        }
+
+        .option-btn.btn-correct {
+            background: var(--success) !important;
+            color: white !important;
+            border-color: var(--success) !important;
+        }
+
+        .option-btn.btn-wrong {
+            background: var(--danger) !important;
+            color: white !important;
+            border-color: var(--danger) !important;
+        }
+
+        /* Weiter- und Restart-Buttons */
+        .action-btn {
+            background: var(--text-dark);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            display: none;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .action-btn:hover { opacity: 0.9; }
+
+        /* Fortschritt */
+        .progress-bar-container {
+            width: 100%;
+            height: 4px;
+            background: var(--border);
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Endbildschirm */
+        .result-screen {
+            display: none;
+            padding: 40px 20px;
+            text-align: center;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            gap: 15px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 480px) {
+            .game-container { height: 100vh; max-height: 100vh; border-radius: 0; }
+            body { padding: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div class="progress-bar-container">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+    </div>
+    
+    <!-- Aktiver Chatbereich -->
+    <div id="chat-interface" style="display: flex; flex-direction: column; flex-grow: 1;">
+        <div class="chat-header">
+            <div class="chat-avatar">🇷🇺</div>
+            <div class="chat-user-info">
+                <h2 id="partner-name">Maxim</h2>
+                <p>online</p>
+            </div>
+        </div>
+
+        <div class="chat-history" id="chat-history">
+            <!-- Chatblasen werden dynamisch generiert -->
+        </div>
+
+        <div class="chat-controls">
+            <div id="options-header" class="options-headline">Wähle die passende Replik:</div>
+            <div class="options-container" id="options-container">
+                <!-- Antwort-Buttons -->
+            </div>
+            <button class="action-btn" id="next-btn" onclick="nextDialog()">Nächste Nachricht ➔</button>
+        </div>
+    </div>
+
+    <!-- Ergebnisbereich -->
+    <div class="result-screen" id="result-screen">
+        <span style="font-size: 3.5rem;">🎉</span>
+        <h2>Dialog-Training beendet!</h2>
+        <p id="final-score" style="font-size: 1.1rem; color: var(--text-dark); font-weight: 500;"></p>
+        <p style="color: var(--text-muted); font-size: 0.9rem; padding: 0 20px;">Du hast bewiesen, dass du umgangssprachliche Antworten im Russischen logisch und kontextgerecht zuordnen kannst.</p>
+        <button class="action-btn" style="display: block; background: var(--success);" onclick="restartGame()">Übung neustarten</button>
+    </div>
+</div>
+
+<script>
+    // 6 realitätsnahe Dialog-Aufgaben
+    const dialogs = [
+        {
+            partner: "Maxim",
+            incomingText: "Сколько тебе лет?",
+            incomingTranslation: "Wie alt bist du?",
+            options: [
+                { text: "Мне полтинник.", correct: true, explanation: "Richtig! 'Мне...' leitet das Alter ein. 'полтинник' bedeutet hier 50 Jahre." },
+                { text: "Это стоит полтинник.", correct: false, explanation: "Falsch! Das bedeutet 'Das kostet 50 Rubel' (Kontext Preis)." },
+                { text: "Да, пожалуйста.", correct: false, explanation: "Falsch! 'Ja, bitte' macht als Antwort auf eine Altersfrage keinen Sinn." }
+            ]
+        },
+        {
+            partner: "Katja (Verkäuferin)",
+            incomingText: "Сколько стоит этот журнал?",
+            incomingTranslation: "Wie viel kostet dieses Magazin?",
+            options: [
+                { text: "Ей уже полтинник.", correct: false, explanation: "Falsch! Das bedeutet 'Sie ist schon 50 Jahre alt'." },
+                { text: "С тебя полтинник.", correct: true, explanation: "Richtig! 'Von dir macht das einen Fuffziger' (Umgangssprachlich für 50 Rubel)." },
+                { text: "Мне нужен один год.", correct: false, explanation: "Falsch! Das bedeutet 'Ich brauche ein Jahr'." }
+            ]
+        },
+        {
+            partner: "Alexej",
+            incomingText: "У тебя есть мелкие деньги? Нужна бумажка для автомата.",
+            incomingTranslation: "Hast du Kleingeld? Ich brauche einen Schein für den Automaten.",
+            options: [
+                { text: "Да, держи один полтинник.", correct: true, explanation: "Richtig! 'Ja, hier hast du einen Fünfzigrubelschein'." },
+                { text: "Да, мне завтра полтинник.", correct: false, explanation: "Falsch! Das hieße 'Ja, ich werde morgen 50 Jahre alt'." },
+                { text: "Это стоит дорого.", correct: false, explanation: "Falsch! Das bedeutet lediglich 'Das ist teuer'." }
+            ]
+        },
+        {
+            partner: "Anna",
+            incomingText: "Твой отец уже на пенсии?",
+            incomingTranslation: "Ist dein Vater schon in Rente?",
+            options: [
+                { text: "Нет, за полтинник.", correct: false, explanation: "Falsch! Grammatikalisch unvollständig und unpassend." },
+                { text: "Нет, ему только скоро полтинник.", correct: true, explanation: "Richtig! 'Nein, er wird erst bald 50' (Kontext Lebensjahre)." },
+                { text: "Да, это стоит полтинник.", correct: false, explanation: "Falsch! Das bezieht sich wieder auf einen Geldwert." }
+            ]
+        },
+        {
+            partner: "Dima",
+            incomingText: "За сколько ты купил эту б/у книгу?",
+            incomingTranslation: "Für wie viel hast du dieses gebrauchte Buch gekauft?",
+            options: [
+                { text: "Я купил её за полтинник.", correct: true, explanation: "Richtig! 'Я купил за...' verlangt den Akkusativ im Geldkontext (für 50 Rubel)." },
+                { text: "Я купил её на 50 лет.", correct: false, explanation: "Falsch! Das hieße 'Ich habe es für 50 Jahre gekauft'." },
+                { text: "Ей завтра полтинник.", correct: false, explanation: "Falsch! Das würde bedeuten 'Sie (die Person) wird morgen 50'." }
+            ]
+        },
+        {
+            partner: "Elena",
+            incomingText: "Твоя мама отлично выглядит!",
+            incomingTranslation: "Deine Mutter sieht hervorragend aus!",
+            options: [
+                { text: "Да, хотя ей уже полтинник.", correct: true, explanation: "Richtig! 'Ja, obwohl sie schon 50 ist' (Kompliment-Kontext zum Alter)." },
+                { text: "Да, это стоит полтинник.", correct: false, explanation: "Falsch! Macht im Bezug auf das Aussehen keinen Sinn." },
+                { text: "Дай мне один полтинник.", correct: false, explanation: "Falsch! Das ist eine unpassende Geldforderung." }
+            ]
+        }
+    ];
+
+    let currentIndex = 0;
+    let score = 0;
+
+    function loadDialog() {
+        if (currentIndex >= dialogs.length) {
+            showResults();
+            return;
+        }
+
+        const current = dialogs[currentIndex];
+        
+        // Header anpassen
+        document.getElementById('partner-name').innerText = current.partner;
+        
+        // Chatverlauf leeren & erste Frage einfügen
+        const history = document.getElementById('chat-history');
+        history.innerHTML = `
+            <div class="chat-bubble bubble-incoming">
+                <strong>${current.partner}:</strong><br>
+                ${current.incomingText}
+                <span class="bubble-meta">Übersetzung: ${current.incomingTranslation}</span>
+            </div>
+        `;
+
+        // Buttons vorbereiten
+        const container = document.getElementById('options-container');
+        container.innerHTML = '';
+        document.getElementById('next-btn').style.display = 'none';
+        document.getElementById('options-header').style.display = 'block';
+
+        current.options.forEach((opt, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = opt.text;
+            btn.onclick = () => selectOption(btn, opt);
+            container.appendChild(btn);
+        });
+
+        // Fortschrittsbalken füllen
+        document.getElementById('progress-fill').style.width = ((currentIndex / dialogs.length) * 100) + "%";
+    }
+
+    function selectOption(selectedBtn, option) {
+        const current = dialogs[currentIndex];
+        const history = document.getElementById('chat-history');
+        const buttons = document.querySelectorAll('.option-btn');
+
+        // Alle Auswahl-Buttons für diese Runde sperren
+        buttons.forEach(btn => btn.disabled = true);
+
+        // Ausgehende Chatblase generieren
+        const replyBubble = document.createElement('div');
+        replyBubble.className = 'chat-bubble bubble-outgoing';
+
+        if (option.correct) {
+            selectedBtn.classList.add('btn-correct');
+            replyBubble.classList.add('correct');
+            replyBubble.innerHTML = `
+                ${option.text}
+                <span class="bubble-meta">✓ ${option.explanation}</span>
+            `;
+            score++;
+        } else {
+            selectedBtn.classList.add('btn-wrong');
+            replyBubble.classList.add('wrong');
+            replyBubble.innerHTML = `
+                ${option.text}
+                <span class="bubble-meta">✗ ${option.explanation}</span>
+            `;
+
+            // Richtigen Button als Hilfestellung grün hervorheben
+            buttons.forEach(btn => {
+                const associatedOpt = current.options.find(o => o.text === btn.innerText);
+                if (associatedOpt && associatedOpt.correct) {
+                    btn.classList.add('btn-correct');
+                }
+            });
+        }
+
+        history.appendChild(replyBubble);
+        
+        // Automatisch nach unten scrollen im Chat
+        history.scrollTop = history.scrollHeight;
+
+        // Steuerung wechseln
+        document.getElementById('options-header').style.display = 'none';
+        document.getElementById('options-container').innerHTML = '';
+        document.getElementById('next-btn').style.display = 'block';
+    }
+
+    function nextDialog() {
+        currentIndex++;
+        loadDialog();
+    }
+
+    function showResults() {
+        document.getElementById('chat-interface').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'flex';
+        document.getElementById('progress-fill').style.width = "100%";
+        document.getElementById('final-score').innerText = `Ergebnis: ${score} von ${dialogs.length} Dialogen richtig beantwortet!`;
+    }
+
+    function restartGame() {
+        currentIndex = 0;
+        score = 0;
+        document.getElementById('chat-interface').style.display = 'flex';
+        document.getElementById('result-screen').style.display = 'none';
+        loadDialog();
+    }
+
+    // Beim Start direkt ausführen
+    window.onload = loadDialog;
+</script>
+
+</body>
+</html>
